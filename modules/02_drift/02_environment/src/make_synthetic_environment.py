@@ -43,8 +43,8 @@ import pandas as pd
 import xarray as xr
 
 HERE = Path(__file__).parent
-SLICK_GEOJSON = Path(__file__).resolve().parent.parent.parent.parent / "data" / "samples" / "synthetic_slick.geojson"
-OUTPUT_NC = Path(__file__).resolve().parent.parent.parent.parent / "data" / "samples" / "synthetic_env.nc"
+SLICK_GEOJSON = Path(__file__).resolve().parent.parent.parent.parent.parent / "data" / "samples" / "synthetic_slick.geojson"
+OUTPUT_NC = Path(__file__).resolve().parent.parent.parent.parent.parent / "data" / "samples" / "synthetic_env.nc"
 
 GRID_MARGIN_DEG = 0.2     # margin added around the slick bbox
 GRID_RESOLUTION_DEG = 0.05  # ~5.5 km grid spacing

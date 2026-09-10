@@ -31,12 +31,12 @@ OceanTrace is built around **THREE** functional product modules. These modules a
 The three functional modules are implemented across five internal directories:
 
 *   **Product Module 1 — Detection**
-    *   `modules/01_oil_spill_detection/` (U-Net, PyTorch)
+    *   `modules/01_detection/` (U-Net, PyTorch)
 *   **Product Module 2 — Drift**
-    *   `modules/02_environment/` (CMEMS, ERA5 readers)
-    *   `modules/03_source_reconstruction/` (OpenDrift, OpenOil)
+    *   `modules/02_drift/02_environment/` (CMEMS, ERA5 readers)
+    *   `modules/02_drift/03_source_reconstruction/` (OpenDrift, OpenOil)
 *   **Product Module 3 — Attribution**
-    *   `modules/04_ais_trajectory/` (GeoPandas, AIS parsing)
-    *   `modules/05_evidence_fusion/` (Transparent weighted evidence ranking)
+    *   `modules/03_attribution/04_ais_trajectory/` (GeoPandas, AIS parsing)
+    *   `modules/03_attribution/05_evidence_fusion/` (Transparent weighted evidence ranking)
 
 *Disclaimer: Module 1 detects a PROBABLE oil slick; it does not magically prove oil. Module 2 produces a probable source region/time with uncertainty. Module 3 identifies investigative candidates, NOT legally guilty vessels. Proximity alone does not establish responsibility. Evidence scores are transparent triage/ranking scores, not probabilities of guilt.*

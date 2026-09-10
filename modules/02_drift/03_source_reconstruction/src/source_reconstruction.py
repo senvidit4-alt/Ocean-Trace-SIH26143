@@ -49,8 +49,8 @@ not assumed -- see comments at each call site):
 """
 import sys
 from pathlib import Path
-_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_repo_root / 'modules/02_environment/src'))
+_repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/02_environment/src'))
 _injected_paths = True
 
 

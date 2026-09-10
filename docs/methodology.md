@@ -3,7 +3,7 @@
 This document outlines the scientific methodology and product principles of the OceanTrace pipeline, divided across the three functional modules.
 
 ## 1. Detection (Module 1)
-**Internal Implementation:** `modules/01_oil_spill_detection/`
+**Internal Implementation:** `modules/01_detection/`
 
 - **SAR Imagery:** Synthetic Aperture Radar (Sentinel-1) is used to detect damping of capillary waves on the ocean surface, characteristic of oil slicks.
 - **Deep Learning:** A U-Net (ResNet34 backbone) model segments the imagery.
@@ -11,7 +11,7 @@ This document outlines the scientific methodology and product principles of the 
 - **Core Principle:** Module 1 detects a **PROBABLE** oil slick; it does not magically prove the presence of oil or its chemical composition.
 
 ## 2. Drift (Module 2)
-**Internal Implementation:** `modules/02_environment/` and `modules/03_source_reconstruction/`
+**Internal Implementation:** `modules/02_drift/02_environment/` and `modules/02_drift/03_source_reconstruction/`
 
 - **Lagrangian Particle Tracking:** The observed oil slick geometry is treated as an initial particle cloud and propagated backward in time.
 - **Environmental Forcing:** OpenDrift (OpenOil) calculates drift vectors using ocean currents (CMEMS) and wind data (ERA5).
@@ -20,7 +20,7 @@ This document outlines the scientific methodology and product principles of the 
 - **Core Principle:** Module 2 produces a probable source region/time with uncertainty. It identifies where a slick likely came from, but does not identify the vessel.
 
 ## 3. Attribution (Module 3)
-**Internal Implementation:** `modules/04_ais_trajectory/` and `modules/05_evidence_fusion/`
+**Internal Implementation:** `modules/03_attribution/04_ais_trajectory/` and `modules/03_attribution/05_evidence_fusion/`
 
 - **AIS Processing:** Historical Automatic Identification System (AIS) data is queried around the reconstructed time and space.
 - **Evidence Dimensions:**

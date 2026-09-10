@@ -12,9 +12,9 @@ import numpy as np
 _repo_root = Path(__file__).resolve().parent.parent
 
 # Safely import the modules which have numbers in their directory names
-sys.path.insert(0, str(_repo_root / 'modules/03_source_reconstruction/src'))
-sys.path.insert(0, str(_repo_root / 'modules/04_ais_trajectory/src'))
-sys.path.insert(0, str(_repo_root / 'modules/05_evidence_fusion/src'))
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/03_source_reconstruction/src'))
+sys.path.insert(0, str(_repo_root / 'modules/03_attribution/04_ais_trajectory/src'))
+sys.path.insert(0, str(_repo_root / 'modules/03_attribution/05_evidence_fusion/src'))
 
 from source_reconstruction import SourceReconstruction, Uncertainty
 from evidence_fusion import (

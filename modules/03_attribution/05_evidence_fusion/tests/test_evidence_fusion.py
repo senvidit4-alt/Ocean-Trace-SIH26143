@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
-_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_repo_root / 'modules/05_evidence_fusion/src'))
-sys.path.insert(0, str(_repo_root / 'modules/03_source_reconstruction/src'))
-sys.path.insert(0, str(_repo_root / 'modules/04_ais_trajectory/src'))
+_repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+sys.path.insert(0, str(_repo_root / 'modules/03_attribution/05_evidence_fusion/src'))
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/03_source_reconstruction/src'))
+sys.path.insert(0, str(_repo_root / 'modules/03_attribution/04_ais_trajectory/src'))
 _injected_paths = True
 
 

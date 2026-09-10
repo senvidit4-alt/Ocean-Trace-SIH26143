@@ -16,9 +16,9 @@ test_openoil.py, test_current_displacement.py, or test_real_environment.py.
 """
 import sys
 from pathlib import Path
-_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_repo_root / 'modules/03_source_reconstruction/src'))
-sys.path.insert(0, str(_repo_root / 'modules/02_environment/src'))
+_repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/03_source_reconstruction/src'))
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/02_environment/src'))
 _injected_paths = True
 
 
@@ -37,7 +37,7 @@ from source_reconstruction import reconstruct_source, SourceReconstruction, Unce
 import make_synthetic_environment
 
 HERE = Path(__file__).parent
-ENV_NETCDF_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "samples" / "synthetic_env.nc"
+ENV_NETCDF_PATH = Path(__file__).resolve().parent.parent.parent.parent.parent / "data" / "samples" / "synthetic_env.nc"
 OUTPUT_PLOT = HERE / "test_source_reconstruction_output.png"
 
 # Techie 2's dummy polygon, exactly as given -- bare geometry dict, no

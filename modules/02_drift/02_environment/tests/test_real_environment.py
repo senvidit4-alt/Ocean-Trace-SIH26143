@@ -22,8 +22,8 @@ No AIS, backward drift, attribution, frontend, or backend here.
 """
 import sys
 from pathlib import Path
-_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_repo_root / 'modules/02_environment/src'))
+_repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/02_environment/src'))
 _injected_paths = True
 
 
@@ -39,8 +39,8 @@ from environment_readers import get_readers
 import make_synthetic_environment  # ensures data/synthetic_env.nc exists / is regenerated
 
 HERE = Path(__file__).parent
-GEOJSON_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "samples" / "synthetic_slick.geojson"
-ENV_NETCDF_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "samples" / "synthetic_env.nc"
+GEOJSON_PATH = Path(__file__).resolve().parent.parent.parent.parent.parent / "data" / "samples" / "synthetic_slick.geojson"
+ENV_NETCDF_PATH = Path(__file__).resolve().parent.parent.parent.parent.parent / "data" / "samples" / "synthetic_env.nc"
 OUTPUT_PLOT = HERE / "test_real_environment_output.png"
 
 # --- provider selection: only these two lines change to point at real data ---

@@ -14,9 +14,9 @@ It runs both a forward drift (for trajectory verification) and a backward drift
 """
 import sys
 from pathlib import Path
-_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_repo_root / 'modules/03_source_reconstruction/src'))
-sys.path.insert(0, str(_repo_root / 'modules/02_environment/src'))
+_repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/03_source_reconstruction/src'))
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/02_environment/src'))
 _injected_paths = True
 
 
@@ -32,7 +32,7 @@ from environment_readers import get_readers
 import make_synthetic_environment
 
 HERE = Path(__file__).parent
-ENV_NETCDF_PATH = Path(__file__).resolve().parent.parent.parent.parent / "data" / "samples" / "synthetic_env.nc"
+ENV_NETCDF_PATH = Path(__file__).resolve().parent.parent.parent.parent.parent / "data" / "samples" / "synthetic_env.nc"
 OUTPUT_PLOT_FORWARD = HERE / "test_source_reconstruction_forward.png"
 OUTPUT_PLOT_BACKWARD = HERE / "test_source_reconstruction_backward.png"
 

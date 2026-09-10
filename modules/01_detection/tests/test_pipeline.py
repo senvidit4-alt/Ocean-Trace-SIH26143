@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 _repo_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_repo_root / 'modules/01_oil_spill_detection/src'))
+sys.path.insert(0, str(_repo_root / 'modules/01_detection/src'))
 _injected_paths = True
 
 

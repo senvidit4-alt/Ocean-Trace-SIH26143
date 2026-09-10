@@ -46,9 +46,9 @@ The OceanTrace codebase separates the three functional product modules into **fi
 
 | Product Module | Responsibilities | Internal Implementation Component(s) |
 | :--- | :--- | :--- |
-| **Module 1 — Detection** | Detect oil slick, distinguish from look-alikes, produce slick geometry/metadata. | `modules/01_oil_spill_detection/` |
-| **Module 2 — Drift** | Backward Lagrangian drift reconstruction, origin/time estimation, uncertainty quantification. | `modules/02_environment/`<br>`modules/03_source_reconstruction/` |
-| **Module 3 — Attribution** | Correlate vessel trajectories with drift model, evaluate spatial/temporal/behavioral evidence, rank candidate vessels. | `modules/04_ais_trajectory/`<br>`modules/05_evidence_fusion/` |
+| **Module 1 — Detection** | Detect oil slick, distinguish from look-alikes, produce slick geometry/metadata. | `modules/01_detection/` |
+| **Module 2 — Drift** | Backward Lagrangian drift reconstruction, origin/time estimation, uncertainty quantification. | `modules/02_drift/02_environment/`<br>`modules/02_drift/03_source_reconstruction/` |
+| **Module 3 — Attribution** | Correlate vessel trajectories with drift model, evaluate spatial/temporal/behavioral evidence, rank candidate vessels. | `modules/03_attribution/04_ais_trajectory/`<br>`modules/03_attribution/05_evidence_fusion/` |
 
 ## Data Contracts
 See `contracts/CONTRACTS.md` for full schema documentation.

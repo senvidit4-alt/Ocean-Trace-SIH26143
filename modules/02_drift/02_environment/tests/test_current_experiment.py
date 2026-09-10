@@ -36,8 +36,8 @@ environment:fallback:x_sea_water_velocity / y_sea_water_velocity.
 """
 import sys
 from pathlib import Path
-_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(_repo_root / 'modules/02_environment/src'))
+_repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
+sys.path.insert(0, str(_repo_root / 'modules/02_drift/02_environment/src'))
 _injected_paths = True
 
 
@@ -68,7 +68,7 @@ TIME_STEP_SECONDS = 3600        # 1 hour
 NUM_STEPS = 6                   # 6 x 1h = 6h total
 SIM_DURATION = timedelta(seconds=TIME_STEP_SECONDS * NUM_STEPS)
 
-GEOJSON_PATH = str(Path(__file__).resolve().parent.parent.parent.parent / "data" / "samples" / "synthetic_slick.geojson")
+GEOJSON_PATH = str(Path(__file__).resolve().parent.parent.parent.parent.parent / "data" / "samples" / "synthetic_slick.geojson")
 OUTPUT_PLOT = Path(__file__).parent / "test_current_displacement_output.png"
 
 
