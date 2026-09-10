@@ -19,3 +19,5 @@ Questions to note -
 Questions to ask Rimpy ma'am - 
 >More details on the sensor idea.
 >More details on the security idea.
+
+mentor change delete rimpy mam,add kalpana mam
