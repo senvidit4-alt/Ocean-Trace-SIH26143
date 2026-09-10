@@ -140,8 +140,55 @@ def test_attribution_contract(tmp_path):
         assert data['analysis_metadata']['n_vessels_considered'] == 1
         assert len(data['candidates']) == 1
         assert data['candidates'][0]['mmsi'] == "123456789"
-        assert data['candidates'][0]['features'][0]['name'] == "spatial_proximity"
+    assert data['candidates'][0]['features'][0]['name'] == "spatial_proximity"
     print("Attribution contract test passed.")
+
+
+def test_reconstruction_contract_with_invalid_netcdf_metadata(tmp_path):
+    # Mock trajectories dataset with an invalid type attribute (e.g., numpy.int32 type object)
+    times = [np.datetime64('2026-08-31T14:00:00'), np.datetime64('2026-08-31T08:00:00')]
+    ds = xr.Dataset({
+        'lon': (['trajectory', 'time'], np.array([[72.5, 72.4]])),
+        'lat': (['trajectory', 'time'], np.array([[18.9, 18.8]]))
+    }, coords={'time': times, 'trajectory': [0]})
+    
+    # Inject the invalid attribute (type object, not instance) that OpenDrift sometimes leaves behind
+    ds.attrs['invalid_dtype_attr'] = np.int32
+    ds['lon'].attrs['another_invalid_attr'] = np.float64
+    
+    unc = Uncertainty(
+        semi_major_m=1200.0, semi_minor_m=800.0, orientation_deg=45.0,
+        radius_68_m=1000.0, radius_95_m=1500.0, method="covariance_ellipse"
+    )
+    
+    recon = SourceReconstruction(
+        observation_time=datetime(2026, 8, 31, 14, 0, 0),
+        origin_time=datetime(2026, 8, 31, 8, 0, 0),
+        search_window_hours=6.0,
+        origin_centroid=(72.4, 18.8),
+        origin_positions={'lon': np.array([72.4]), 'lat': np.array([18.8])},
+        uncertainty=unc,
+        trajectories=ds,
+        n_particles_seeded=1,
+        n_particles_valid=1,
+        env_mode='netcdf',
+        env_kwargs={'paths': 'dummy.nc'},
+        coverage_warnings=[]
+    )
+    
+    out_json = tmp_path / "reconstruction_invalid.json"
+    
+    # This should not raise a TypeError now
+    save_reconstruction_json(recon, str(out_json))
+    
+    assert out_json.exists()
+    out_nc = tmp_path / "reconstruction_invalid.nc"
+    assert out_nc.exists()
+    
+    loaded_recon = load_reconstruction_json(str(out_json))
+    assert str(np.int32) in loaded_recon.trajectories.attrs['invalid_dtype_attr']
+    assert str(np.float64) in loaded_recon.trajectories['lon'].attrs['another_invalid_attr']
+    print("Reconstruction contract invalid NetCDF metadata regression test passed.")
 
 
 if __name__ == "__main__":
@@ -152,5 +199,6 @@ if __name__ == "__main__":
         tdp = Path(td)
         test_detection_contract(tdp)
         test_reconstruction_contract(tdp)
+        test_reconstruction_contract_with_invalid_netcdf_metadata(tdp)
         test_attribution_contract(tdp)
     print("ALL CONTRACT TESTS PASSED.")

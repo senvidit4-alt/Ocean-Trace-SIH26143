@@ -73,8 +73,18 @@ def save_reconstruction_json(recon: SourceReconstruction, json_filepath: str, nc
     else:
         nc_filepath = Path(nc_filepath)
         
+    # Clean dataset attributes before saving
+    ds_to_save = recon.trajectories.copy()
+    for k, v in ds_to_save.attrs.items():
+        if isinstance(v, type):
+            ds_to_save.attrs[k] = str(v)
+    for var in ds_to_save.variables:
+        for k, v in ds_to_save[var].attrs.items():
+            if isinstance(v, type):
+                ds_to_save[var].attrs[k] = str(v)
+                
     # Save the xarray dataset to netCDF
-    recon.trajectories.to_netcdf(nc_filepath)
+    ds_to_save.to_netcdf(nc_filepath)
     
     # Compute relative path from json directory to nc file
     try:
