@@ -1,48 +1,21 @@
-# Trace-Oceans: Oil Spill Detection with Deep Learning (U-Net)
+# OceanTrace (Trace-Oceans)
 
-An end-to-end semantic segmentation pipeline using PyTorch for detecting oil spills in satellite and aerial imagery.
+OceanTrace is a modular pipeline for oil spill attribution, combining satellite remote sensing, drift modeling, and vessel tracking to identify probable sources of marine pollution.
 
-## 📁 Directory Structure
+## High-Level Pipeline
 
-```text
-oil-spill-ml/
-├── dataset/
-│   ├── images/         # Satellite/aerial input images (.png, .jpg, .tif)
-│   └── masks/          # Binary segmentation masks (.png, .jpg, .tif)
-├── model.py            # U-Net architecture & loss metrics
-├── data_loader.py      # Dataset loading & preprocessing
-├── train.py            # Training and validation loop
-├── inference.py        # Single image & batch inference with GeoTIFF support
-├── check_dataset.py    # Dataset validation & statistics utility
-├── inspect_mask.py     # Mask visualization & inspection utility
-├── test_pipeline.py    # Pipeline integration test
-└── requirements.txt    # Required Python packages
-```
+1. **Satellite oil-spill detection**: Deep learning segmentation (Module 01) detects oil slicks from SAR imagery.
+2. **Environmental data**: Integration of CMEMS ocean currents and ERA5 wind data (Module 02).
+3. **Source reconstruction**: OpenDrift-based backward propagation to estimate the origin of the spill (Module 03).
+4. **AIS trajectory analysis**: Parsing and contextualizing historical vessel movements (Module 04).
+5. **Evidence fusion**: Scoring vessel tracks against the simulated particle cloud to generate an investigative candidate ranking (Module 05).
 
-## 🚀 Quick Start
+*Disclaimer: This analysis identifies probable source regions, release-time windows, and candidate vessels for investigative priority. It does not identify legally responsible vessels.*
 
-### 1. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+## Modules
 
-### 2. Prepare Dataset
-Place your satellite images and corresponding binary masks into `dataset/images/` and `dataset/masks/`.
-- Images & masks should have matching filenames (e.g. `sample_01.png` in images and `sample_01.png` in masks).
-- Masks should be grayscale/binary images where white pixels (255) represent oil spills and black (0) represents clean water/land.
-
-### 3. Run Training
-```bash
-python train.py --epochs 25 --batch-size 8 --lr 1e-4
-```
-*Tip: If the dataset folder is empty, the training script automatically creates synthetic ocean and oil spill samples so you can test immediately!*
-
-### 4. Run Inference
-```bash
-python inference.py --image path/to/satellite_image.tif --checkpoint checkpoints/best_model.pth --output-dir ./predictions
-```
-
-### 5. Output Artifacts
-- **Checkpoints**: Saved in `./checkpoints/best_model.pth` and `./checkpoints/last_model.pth`
-- **Training Curves**: Saved as `training_curves.png`
-- **Inference Results**: Segmentation mask overlay and geo-referenced outputs in `./predictions/`
+- [Module 01: Oil Spill Detection](modules/01_oil_spill_detection/README.md)
+- [Module 02: Environment](modules/02_environment/README.md)
+- [Module 03: Source Reconstruction](modules/03_source_reconstruction/README.md)
+- [Module 04: AIS Trajectory](modules/04_ais_trajectory/README.md)
+- [Module 05: Evidence Fusion](modules/05_evidence_fusion/README.md)

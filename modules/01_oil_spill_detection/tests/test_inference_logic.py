@@ -1,4 +1,11 @@
 # test_inference_logic.py
+import sys
+from pathlib import Path
+_repo_root = Path(__file__).resolve().parent.parent.parent.parent
+sys.path.insert(0, str(_repo_root / 'modules/01_oil_spill_detection/src'))
+_injected_paths = True
+
+
 import numpy as np
 from inference import mask_to_geojson, estimate_age
 import rasterio

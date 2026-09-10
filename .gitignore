@@ -1,20 +1,29 @@
-# Dataset - bahut bada hai, git pe nahi jana chahiye
-dataset/
-*.tif
-*.7z
+# Environment
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
 
-# Trained model checkpoints - ye bhi bade hote hain
+# Data
+data/*.nc
+data/*.csv
+data/*.tif
+data/model_weights/
+data/samples/*.tmp
+*.nc
+*.csv
+*.tif
+
+# Outputs
+outputs/bay_marchand/*
+!outputs/bay_marchand/.gitkeep
+test_*_output.png
+*.png
+
+# Models
 *.pth
 *.pt
 
-# Python cache files
-__pycache__/
-*.pyc
-
-# Virtual environment (agar bana ho)
-venv/
-env/
-
-# IDE specific files
+# IDE
 .vscode/
 .idea/
