@@ -1,17 +1,36 @@
 import torch
 from torch.utils.data import DataLoader, random_split
 from data_loader import SpillDataset
-from model import UNet, DiceBCELoss, calculate_metrics
+from model import UNet, DiceBCELoss, HybridFocalLoss, calculate_metrics
 
-# ---- Config ----
-IMAGE_DIR = "dataset/images"
-MASK_DIR = "dataset/masks"
-IMAGE_SIZE = 128
-BATCH_SIZE = 2
-EPOCHS = 30                 # upper cap - early stopping will likely finish sooner
-LR = 1e-4
-MAX_SAMPLES = 150
-PATIENCE = 5                # stop if val IoU doesn't improve for this many epochs
+import argparse
+
+# ---- Config with CLI Arguments ----
+parser = argparse.ArgumentParser(description="Train U-Net on Sentinel-1 SAR Oil Spill dataset.")
+parser.add_argument("--image-dir", type=str, default="dataset/images", help="Path to SAR images folder")
+parser.add_argument("--mask-dir", type=str, default="dataset/masks", help="Path to masks folder")
+parser.add_argument("--image-size", type=int, default=128, help="Resize image height and width")
+parser.add_argument("--batch-size", type=int, default=2, help="Batch size")
+parser.add_argument("--epochs", type=int, default=30, help="Number of training epochs")
+parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate")
+parser.add_argument("--max-samples", type=int, default=0, help="Max samples to load (0 for all samples)")
+parser.add_argument("--patience", type=int, default=5, help="Early stopping patience")
+parser.add_argument("--checkpoint", type=str, default="unet_spill_best.pth", help="Checkpoint save path")
+parser.add_argument("--alpha", type=float, default=0.3, help="Focal Tversky alpha (False Positive weight)")
+parser.add_argument("--beta", type=float, default=0.7, help="Focal Tversky beta (False Negative weight)")
+parser.add_argument("--gamma", type=float, default=0.75, help="Focal Tversky gamma exponent")
+parser.add_argument("--blend-weight", type=float, default=0.8, help="Weight for Focal Tversky vs DiceBCE (0.8 = 80% FTL)")
+args = parser.parse_args()
+
+IMAGE_DIR = args.image_dir
+MASK_DIR = args.mask_dir
+IMAGE_SIZE = args.image_size
+BATCH_SIZE = args.batch_size
+EPOCHS = args.epochs
+LR = args.lr
+MAX_SAMPLES = args.max_samples if args.max_samples > 0 else None
+PATIENCE = args.patience
+CHECKPOINT_PATH = args.checkpoint
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device:", device)
@@ -37,7 +56,12 @@ print(f"Train samples: {len(train_dataset)}, Val samples: {len(val_dataset)}")
 
 # ---- Model, Loss, Optimizer ----
 model = UNet(in_channels=1, num_classes=1).to(device)
-criterion = DiceBCELoss(bce_weight=0.5)
+criterion = HybridFocalLoss(
+    alpha=args.alpha,
+    beta=args.beta,
+    gamma=args.gamma,
+    blend_weight=args.blend_weight
+)
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
 # ---- Training Loop with Early Stopping ----
@@ -75,11 +99,11 @@ for epoch in range(EPOCHS):
     print(f"Epoch {epoch+1}/{EPOCHS} | Train Loss: {avg_train_loss:.4f} | Val IoU: {avg_val_iou:.4f} | Val Dice: {avg_val_dice:.4f}")
 
     # ---- Early stopping + best model checkpoint ----
-    if avg_val_iou > best_iou:
+    if avg_val_iou > best_iou or (epoch == 0 and avg_val_iou >= best_iou):
         best_iou = avg_val_iou
         epochs_without_improvement = 0
-        torch.save(model.state_dict(), "unet_spill_checkpoint.pth")
-        print(f"  -> New best model saved (IoU: {best_iou:.4f})")
+        torch.save(model.state_dict(), CHECKPOINT_PATH)
+        print(f"  -> New best model saved (IoU: {best_iou:.4f}) to {CHECKPOINT_PATH}")
     else:
         epochs_without_improvement += 1
         if epochs_without_improvement >= PATIENCE:
@@ -87,4 +111,4 @@ for epoch in range(EPOCHS):
             break
 
 print(f"\nTraining complete. Best Val IoU: {best_iou:.4f}")
-print("Best model saved as unet_spill_checkpoint.pth")
+print(f"Best model saved as {CHECKPOINT_PATH}")

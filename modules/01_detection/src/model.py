@@ -142,8 +142,57 @@ class DiceBCELoss(nn.Module):
         intersection = (probs * targets).sum()
         dice = (2.0 * intersection + self.smooth) / (probs.sum() + targets.sum() + self.smooth)
         dice_loss = 1.0 - dice
-
         return self.bce_weight * bce_loss + (1.0 - self.bce_weight) * dice_loss
+
+
+class FocalTverskyLoss(nn.Module):
+    """
+    Focal Tversky Loss for class-imbalanced segmentation.
+    Penalizes False Negatives (missing oil) with beta, False Positives (lookalikes) with alpha.
+    """
+    def __init__(self, alpha: float = 0.3, beta: float = 0.7, gamma: float = 0.75, smooth: float = 1e-6):
+        super().__init__()
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.smooth = smooth
+
+    def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        probs = torch.sigmoid(inputs).view(-1)
+        targets = targets.view(-1)
+
+        tp = (probs * targets).sum()
+        fp = (probs * (1.0 - targets)).sum()
+        fn = ((1.0 - probs) * targets).sum()
+
+        tversky = (tp + self.smooth) / (tp + self.alpha * fp + self.beta * fn + self.smooth)
+        focal_tversky = torch.pow((1.0 - tversky), self.gamma)
+        return focal_tversky
+
+
+class HybridFocalLoss(nn.Module):
+    """
+    Blends Focal Tversky Loss (default 80%) with unweighted DiceBCELoss (default 20%)
+    for optimal lookalike suppression and training stability.
+    """
+    def __init__(
+        self,
+        alpha: float = 0.3,
+        beta: float = 0.7,
+        gamma: float = 0.75,
+        bce_weight: float = 0.5,
+        blend_weight: float = 0.8,
+        smooth: float = 1e-6
+    ):
+        super().__init__()
+        self.ftl = FocalTverskyLoss(alpha=alpha, beta=beta, gamma=gamma, smooth=smooth)
+        self.dice_bce = DiceBCELoss(bce_weight=bce_weight, smooth=smooth)
+        self.blend_weight = blend_weight
+
+    def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        ftl_loss = self.ftl(inputs, targets)
+        dice_bce_loss = self.dice_bce(inputs, targets)
+        return self.blend_weight * ftl_loss + (1.0 - self.blend_weight) * dice_bce_loss
 
 
 def calculate_metrics(preds: torch.Tensor, targets: torch.Tensor, threshold: float = 0.5, smooth: float = 1e-6):
@@ -163,6 +212,73 @@ def calculate_metrics(preds: torch.Tensor, targets: torch.Tensor, threshold: flo
     dice = (2.0 * intersection + smooth) / (binary_preds.sum().item() + targets.sum().item() + smooth)
 
     return iou, dice
+
+
+class UNetDirect(nn.Module):
+    """
+    Direct-mapped U-Net architecture matching Colab in-memory fast training weights.
+    """
+    def __init__(self, in_channels: int = 1, num_classes: int = 1):
+        super().__init__()
+        class DConv(nn.Module):
+            def __init__(self, c_in, c_out):
+                super().__init__()
+                self.conv = nn.Sequential(
+                    nn.Conv2d(c_in, c_out, 3, padding=1, bias=False),
+                    nn.BatchNorm2d(c_out),
+                    nn.ReLU(inplace=True),
+                    nn.Conv2d(c_out, c_out, 3, padding=1, bias=False),
+                    nn.BatchNorm2d(c_out),
+                    nn.ReLU(inplace=True),
+                )
+            def forward(self, x): return self.conv(x)
+
+        self.inc = DConv(in_channels, 64)
+        self.down1 = nn.Sequential(nn.MaxPool2d(2), DConv(64, 128))
+        self.down2 = nn.Sequential(nn.MaxPool2d(2), DConv(128, 256))
+        self.down3 = nn.Sequential(nn.MaxPool2d(2), DConv(256, 512))
+        self.down4 = nn.Sequential(nn.MaxPool2d(2), DConv(512, 512))
+
+        self.up1 = nn.ConvTranspose2d(512, 256, 2, stride=2)
+        self.conv1 = DConv(512 + 256, 256)
+        self.up2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+        self.conv2 = DConv(256 + 128, 128)
+        self.up3 = nn.ConvTranspose2d(128, 64, 2, stride=2)
+        self.conv3 = DConv(128 + 64, 64)
+        self.up4 = nn.ConvTranspose2d(64, 64, 2, stride=2)
+        self.conv4 = DConv(64 + 64, 64)
+        self.outc = nn.Conv2d(64, num_classes, 1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x1 = self.inc(x)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        x4 = self.down3(x3)
+        x5 = self.down4(x4)
+        x = self.up1(x5)
+        x = self.conv1(torch.cat([x4, x], dim=1))
+        x = self.up2(x)
+        x = self.conv2(torch.cat([x3, x], dim=1))
+        x = self.up3(x)
+        x = self.conv3(torch.cat([x2, x], dim=1))
+        x = self.up4(x)
+        x = self.conv4(torch.cat([x1, x], dim=1))
+        return self.outc(x)
+
+
+def load_spill_model(model_path: str, device: str = "cpu") -> nn.Module:
+    """
+    Universally loads trained spill checkpoint (supports both UNet and UNetDirect architectures).
+    """
+    dev = torch.device(device)
+    state = torch.load(model_path, map_location=dev)
+    if "inc.conv.0.weight" in state:
+        model = UNetDirect(in_channels=1, num_classes=1).to(dev)
+    else:
+        model = UNet(in_channels=1, num_classes=1).to(dev)
+    model.load_state_dict(state)
+    model.eval()
+    return model
 
 
 if __name__ == "__main__":

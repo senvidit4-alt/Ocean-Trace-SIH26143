@@ -18,7 +18,9 @@ class SpillDataset(Dataset):
         self.mask_dir = mask_dir
         self.image_size = image_size
         self.augment = augment
-        self.filenames = sorted(os.listdir(mask_dir))
+        img_set = set(f for f in os.listdir(image_dir) if f.lower().endswith(('.tif', '.tiff')))
+        mask_set = set(f for f in os.listdir(mask_dir) if f.lower().endswith(('.tif', '.tiff')))
+        self.filenames = sorted(list(img_set.intersection(mask_set)))
 
         if max_samples is not None:
             self.filenames = self.filenames[:max_samples]
@@ -37,9 +39,13 @@ class SpillDataset(Dataset):
         with rasterio.open(mask_path) as src:
             mask = src.read(1).astype(np.float32)
 
-        img_min, img_max = img.min(), img.max()
-        if img_max > img_min:
-            img = (img - img_min) / (img_max - img_min)
+        # Fixed SAR dB clipping range [-35.0 dB, -5.0 dB] (Level 1 Fix)
+        V_MIN, V_MAX = -35.0, -5.0
+        if img.min() < 0:
+            img = np.clip(img, V_MIN, V_MAX)
+            img = (img - V_MIN) / (V_MAX - V_MIN)
+        elif img.max() > 1.0:
+            img = (img - img.min()) / (img.max() - img.min() + 1e-6)
 
         img = cv2.resize(img, (self.image_size, self.image_size), interpolation=cv2.INTER_LINEAR)
         mask = cv2.resize(mask, (self.image_size, self.image_size), interpolation=cv2.INTER_NEAREST)

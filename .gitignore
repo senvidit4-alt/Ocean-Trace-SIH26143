@@ -27,3 +27,27 @@ test_*_output.png
 # IDE
 .vscode/
 .idea/
+
+# Datasets & Large Archives
+dataset/
+zenodo_test/
+raw_dataset/
+*.7z
+*.zip
+*.tar
+*.tar.gz
+*.tiff
+*.TIFF
+
+# Temporary and local experiment artifacts
+handoff_output*.json
+before_level1*
+threshold_sweep/
+
+
+# Local scratch scripts
+render_*.py
+visualize_synthetic.py
+inspect_clusters.py
+generate_synthetic_data.py
+
