@@ -1,5 +1,9 @@
 # Module 05: Evidence Fusion
 
+*Internal implementation component of Product Module 3 — Attribution*
+
+
+
 **1. Purpose:** Score and rank candidate vessels based on their alignment with the reconstructed spill source.
 **2. Inputs:** `SourceReconstruction` object (Module 03) and `AISDataset` (Module 04).
 **3. Processing:** Evaluates 5 evidence dimensions (spatial proximity, temporal overlap, trajectory consistency, drift consistency, speed/course behavior).

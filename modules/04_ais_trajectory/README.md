@@ -1,5 +1,9 @@
 # Module 04: AIS Trajectory
 
+*Internal implementation component of Product Module 3 — Attribution*
+
+
+
 **1. Purpose:** Ingest and process Automatic Identification System (AIS) data for vessel tracking.
 **2. Inputs:** AIS data in CSV format.
 **3. Processing:** Parses vessel tracks, identifies gaps in coverage, and queries vessels by spatial-temporal proximity.

@@ -1,5 +1,9 @@
 # Module 01: Oil Spill Detection
 
+*Internal implementation component of Product Module 1 — Detection*
+
+
+
 **1. Purpose:** Detect oil spills from Synthetic Aperture Radar (SAR) imagery using deep learning.
 **2. Inputs:** SAR imagery (e.g., Sentinel-1).
 **3. Processing:** Neural network inference to generate segmentation masks.

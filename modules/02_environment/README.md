@@ -1,5 +1,9 @@
 # Module 02: Environment
 
+*Internal implementation component of Product Module 2 — Drift*
+
+
+
 **1. Purpose:** Provide integrated ocean current and wind data for drift modeling.
 **2. Inputs:** CMEMS (currents) and ERA5 (wind) NetCDF files.
 **3. Processing:** Harmonizes and standardizes environmental variables for OpenDrift compatibility.

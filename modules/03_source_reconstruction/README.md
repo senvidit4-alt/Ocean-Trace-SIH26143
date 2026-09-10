@@ -1,5 +1,9 @@
 # Module 03: Source Reconstruction
 
+*Internal implementation component of Product Module 2 — Drift*
+
+
+
 **1. Purpose:** Estimate the probable origin and release time of an observed oil slick using backward drift propagation.
 **2. Inputs:** Slick GeoJSON (or equivalent mask), observation time, environmental readers.
 **3. Processing:** Simulates particle trajectories backwards in time using OpenDrift (OpenOil/OceanDrift).
