@@ -1,7 +1,9 @@
+import os
+import shutil
 import torch
 from torch.utils.data import DataLoader, random_split
 from data_loader import SpillDataset
-from model import UNet, DiceBCELoss, HybridFocalLoss, calculate_metrics
+from model import build_model, DiceBCELoss, HybridFocalLoss, calculate_metrics
 
 import argparse
 
@@ -19,7 +21,7 @@ parser.add_argument("--checkpoint", type=str, default="unet_spill_best.pth", hel
 parser.add_argument("--alpha", type=float, default=0.3, help="Focal Tversky alpha (False Positive weight)")
 parser.add_argument("--beta", type=float, default=0.7, help="Focal Tversky beta (False Negative weight)")
 parser.add_argument("--gamma", type=float, default=0.75, help="Focal Tversky gamma exponent")
-parser.add_argument("--blend-weight", type=float, default=0.8, help="Weight for Focal Tversky vs DiceBCE (0.8 = 80% FTL)")
+parser.add_argument("--blend-weight", type=float, default=0.8, help="Weight for Focal Tversky vs DiceBCE (0.8 = 80%% FTL)")
 args = parser.parse_args()
 
 IMAGE_DIR = args.image_dir
@@ -55,7 +57,7 @@ val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False)
 print(f"Train samples: {len(train_dataset)}, Val samples: {len(val_dataset)}")
 
 # ---- Model, Loss, Optimizer ----
-model = UNet(in_channels=1, num_classes=1).to(device)
+model = build_model().to(device)
 criterion = HybridFocalLoss(
     alpha=args.alpha,
     beta=args.beta,
@@ -104,6 +106,15 @@ for epoch in range(EPOCHS):
         epochs_without_improvement = 0
         torch.save(model.state_dict(), CHECKPOINT_PATH)
         print(f"  -> New best model saved (IoU: {best_iou:.4f}) to {CHECKPOINT_PATH}")
+
+        # Immediately backup best checkpoint to Google Drive (for Colab session persistence)
+        drive_checkpoint = "/content/drive/MyDrive/oilspill_dataset/unet_spill_best_latest.pth"
+        try:
+            os.makedirs(os.path.dirname(drive_checkpoint), exist_ok=True)
+            shutil.copy(CHECKPOINT_PATH, drive_checkpoint)
+            print(f"  -> Best model backup copied to Drive: {drive_checkpoint}")
+        except Exception as e:
+            print(f"  -> Note: Drive backup skipped ({e})")
     else:
         epochs_without_improvement += 1
         if epochs_without_improvement >= PATIENCE:

@@ -1,119 +1,27 @@
 """
-U-Net Architecture and Segmentation Loss Functions for Oil Spill Detection.
+Pretrained ResNet34 U-Net Architecture and Segmentation Loss Functions for Oil Spill Detection.
 """
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import segmentation_models_pytorch as smp
 
 
-class DoubleConv(nn.Module):
-    """(Convolution => [BatchNorm] => ReLU) * 2"""
-
-    def __init__(self, in_channels: int, out_channels: int, mid_channels: int = None):
-        super().__init__()
-        if not mid_channels:
-            mid_channels = out_channels
-        self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(mid_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.double_conv(x)
-
-
-class Down(nn.Module):
-    """Downscaling with MaxPool then DoubleConv"""
-
-    def __init__(self, in_channels: int, out_channels: int):
-        super().__init__()
-        self.maxpool_conv = nn.Sequential(
-            nn.MaxPool2d(2),
-            DoubleConv(in_channels, out_channels)
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.maxpool_conv(x)
-
-
-class Up(nn.Module):
-    """Upscaling then DoubleConv"""
-
-    def __init__(self, in_channels: int, out_channels: int, bilinear: bool = True):
-        super().__init__()
-        if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
-            self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
-        else:
-            self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
-            self.conv = DoubleConv(in_channels, out_channels)
-
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
-        x1 = self.up(x1)
-
-        diff_y = x2.size()[2] - x1.size()[2]
-        diff_x = x2.size()[3] - x1.size()[3]
-
-        x1 = F.pad(x1, [diff_x // 2, diff_x - diff_x // 2,
-                        diff_y // 2, diff_y - diff_y // 2])
-
-        x = torch.cat([x2, x1], dim=1)
-        return self.conv(x)
-
-
-class OutConv(nn.Module):
-    """Final 1x1 Convolution to map features to classes"""
-
-    def __init__(self, in_channels: int, out_channels: int):
-        super().__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.conv(x)
-
-
-class UNet(nn.Module):
+def build_model():
     """
-    U-Net segmentation model designed for Oil Spill Detection in satellite and aerial imagery.
+    Builds a U-Net model with a pretrained ResNet34 encoder from segmentation_models_pytorch.
+    Adapts ImageNet weights (3-channel) automatically to 1-channel grayscale SAR input.
     """
+    return smp.Unet(
+        encoder_name="resnet34",
+        encoder_weights="imagenet",
+        in_channels=1,
+        classes=1,
+    )
 
-    def __init__(self, in_channels: int = 3, num_classes: int = 1, bilinear: bool = True):
-        super().__init__()
-        self.in_channels = in_channels
-        self.num_classes = num_classes
-        self.bilinear = bilinear
 
-        self.inc = DoubleConv(in_channels, 64)
-        self.down1 = Down(64, 128)
-        self.down2 = Down(128, 256)
-        self.down3 = Down(256, 512)
-        factor = 2 if bilinear else 1
-        self.down4 = Down(512, 1024 // factor)
-
-        self.up1 = Up(1024, 512 // factor, bilinear)
-        self.up2 = Up(512, 256 // factor, bilinear)
-        self.up3 = Up(256, 128 // factor, bilinear)
-        self.up4 = Up(128, 64, bilinear)
-        self.outc = OutConv(64, num_classes)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-
-        x = self.up1(x5, x4)
-        x = self.up2(x, x3)
-        x = self.up3(x, x2)
-        x = self.up4(x, x1)
-        logits = self.outc(x)
-        return logits
+# Backwards compatibility alias for imports expecting UNet
+UNet = build_model
 
 
 # ---------------------------------------------------------------------------
@@ -214,79 +122,42 @@ def calculate_metrics(preds: torch.Tensor, targets: torch.Tensor, threshold: flo
     return iou, dice
 
 
-class UNetDirect(nn.Module):
+def load_spill_model(model_path: str = "unet_spill_best.pth", device: str = "cpu") -> nn.Module:
     """
-    Direct-mapped U-Net architecture matching Colab in-memory fast training weights.
+    Loads trained spill checkpoint into the ResNet34 U-Net architecture.
+    Searches multiple standard locations to guarantee out-of-the-box loading.
     """
-    def __init__(self, in_channels: int = 1, num_classes: int = 1):
-        super().__init__()
-        class DConv(nn.Module):
-            def __init__(self, c_in, c_out):
-                super().__init__()
-                self.conv = nn.Sequential(
-                    nn.Conv2d(c_in, c_out, 3, padding=1, bias=False),
-                    nn.BatchNorm2d(c_out),
-                    nn.ReLU(inplace=True),
-                    nn.Conv2d(c_out, c_out, 3, padding=1, bias=False),
-                    nn.BatchNorm2d(c_out),
-                    nn.ReLU(inplace=True),
-                )
-            def forward(self, x): return self.conv(x)
-
-        self.inc = DConv(in_channels, 64)
-        self.down1 = nn.Sequential(nn.MaxPool2d(2), DConv(64, 128))
-        self.down2 = nn.Sequential(nn.MaxPool2d(2), DConv(128, 256))
-        self.down3 = nn.Sequential(nn.MaxPool2d(2), DConv(256, 512))
-        self.down4 = nn.Sequential(nn.MaxPool2d(2), DConv(512, 512))
-
-        self.up1 = nn.ConvTranspose2d(512, 256, 2, stride=2)
-        self.conv1 = DConv(512 + 256, 256)
-        self.up2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
-        self.conv2 = DConv(256 + 128, 128)
-        self.up3 = nn.ConvTranspose2d(128, 64, 2, stride=2)
-        self.conv3 = DConv(128 + 64, 64)
-        self.up4 = nn.ConvTranspose2d(64, 64, 2, stride=2)
-        self.conv4 = DConv(64 + 64, 64)
-        self.outc = nn.Conv2d(64, num_classes, 1)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x1 = self.inc(x)
-        x2 = self.down1(x1)
-        x3 = self.down2(x2)
-        x4 = self.down3(x3)
-        x5 = self.down4(x4)
-        x = self.up1(x5)
-        x = self.conv1(torch.cat([x4, x], dim=1))
-        x = self.up2(x)
-        x = self.conv2(torch.cat([x3, x], dim=1))
-        x = self.up3(x)
-        x = self.conv3(torch.cat([x2, x], dim=1))
-        x = self.up4(x)
-        x = self.conv4(torch.cat([x1, x], dim=1))
-        return self.outc(x)
-
-
-def load_spill_model(model_path: str, device: str = "cpu") -> nn.Module:
-    """
-    Universally loads trained spill checkpoint (supports both UNet and UNetDirect architectures).
-    """
+    from pathlib import Path
     dev = torch.device(device)
-    state = torch.load(model_path, map_location=dev)
-    if "inc.conv.0.weight" in state:
-        model = UNetDirect(in_channels=1, num_classes=1).to(dev)
-    else:
-        model = UNet(in_channels=1, num_classes=1).to(dev)
-    model.load_state_dict(state)
+    model = build_model().to(dev)
+
+    candidates = [
+        Path(model_path),
+        Path(__file__).resolve().parent / model_path,
+        Path(__file__).resolve().parent / "unet_spill_best.pth",
+        Path(__file__).resolve().parent.parent.parent.parent / model_path,
+        Path(__file__).resolve().parent.parent.parent.parent / "unet_spill_best.pth",
+    ]
+    resolved_path = None
+    for cand in candidates:
+        if cand.exists() and cand.is_file():
+            resolved_path = cand
+            break
+
+    if resolved_path is not None:
+        state = torch.load(str(resolved_path), map_location=dev)
+        model.load_state_dict(state)
     model.eval()
     return model
 
 
 if __name__ == "__main__":
-    # Quick sanity check — SAR images are 1-channel (grayscale), not 3-channel RGB
-    model = UNet(in_channels=1, num_classes=1)
-    dummy_input = torch.randn(2, 1, 256, 256)
+    # Quick sanity check — SAR images are 1-channel (grayscale)
+    model = build_model()
+    dummy_input = torch.randn(1, 1, 128, 128)
     output = model(dummy_input)
-    print("Model created successfully!")
+    print("Model built successfully!")
     print(f"Input shape:  {dummy_input.shape}")
     print(f"Output shape: {output.shape}")
-    assert output.shape == (2, 1, 256, 256), "Output shape mismatch!"
+    assert output.shape == (1, 1, 128, 128), "Output shape mismatch!"
+    print("Sanity check passed.")

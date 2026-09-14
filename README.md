@@ -1,42 +1,149 @@
-# OceanTrace (Trace-Oceans)
+# OceanTrace (Ocean-Trace-v2.0)
 
-OceanTrace is a modular pipeline for oil spill attribution, combining satellite remote sensing, drift modeling, and vessel tracking to identify probable sources of marine pollution.
+> **Autonomous Satellite Oil Spill Detection, Backward Drift Reconstruction & AIS Vessel Attribution Pipeline**
 
-## System Architecture
-
-OceanTrace is built around **THREE** functional product modules. These modules are intentionally independent and communicate through explicit JSON data contracts rather than importing each other's internal implementations.
-
-### Module 1 — Detection
-**Owner:** Techie 2
-- **Input:** Sentinel-1 SAR satellite image
-- **Responsibilities:** Detect oil slick, distinguish probable oil from look-alikes, produce the detected slick geometry and detection metadata.
-- **Output:** `detection.json` (GeoJSON polygon, detected area, age estimate, class probability, observation time)
-
-### Module 2 — Drift
-**Owner:** Techie 3
-- **Input:** `detection.json` from Module 1, ocean current data, wind data
-- **Responsibilities:** Perform backward Lagrangian drift/source reconstruction, estimate where the slick most probably originated, estimate origin time, quantify uncertainty.
-- **Output:** `reconstruction.json` + `trajectory.nc` (probable origin point/region, origin time, uncertainty radius/ellipse, full particle trajectory file)
-
-### Module 3 — Attribution
-**Owner:** Techie 3
-- **Input:** `reconstruction.json` from Module 2, AIS vessel trajectory data
-- **Responsibilities:** Identify vessels observable in the reconstructed source region/time window, correlate vessel trajectories with oil movement (evaluating spatial proximity, temporal overlap, trajectory consistency, drift consistency, and speed/course behavior), and produce a transparent evidence-based ranking.
-- **Output:** `attribution.json` (ranked candidate vessel list, evidence/features for each candidate, human-readable investigation report)
+OceanTrace is an end-to-end intelligence system for marine pollution monitoring and maritime vessel attribution. It combines Sentinel-1 SAR satellite deep learning (U-Net), backward Lagrangian hydrodynamic drift modeling (OpenDrift/CMEMS/ERA5), and spatio-temporal AIS vessel telemetry correlation.
 
 ---
 
-## Internal Implementation Components
+## 🚀 Quick Start Guide (For Teammates)
 
-The three functional modules are implemented across five internal directories:
+Get the entire full-stack system running locally in under 3 minutes.
 
-*   **Product Module 1 — Detection**
-    *   `modules/01_detection/` (U-Net, PyTorch)
-*   **Product Module 2 — Drift**
-    *   `modules/02_drift/02_environment/` (CMEMS, ERA5 readers)
-    *   `modules/02_drift/03_source_reconstruction/` (OpenDrift, OpenOil)
-*   **Product Module 3 — Attribution**
-    *   `modules/03_attribution/04_ais_trajectory/` (GeoPandas, AIS parsing)
-    *   `modules/03_attribution/05_evidence_fusion/` (Transparent weighted evidence ranking)
+### 1. Prerequisites
+- **Python 3.10+**
+- **Node.js 18+** & **npm**
+- **Git**
 
-*Disclaimer: Module 1 detects a PROBABLE oil slick; it does not magically prove oil. Module 2 produces a probable source region/time with uncertainty. Module 3 identifies investigative candidates, NOT legally guilty vessels. Proximity alone does not establish responsibility. Evidence scores are transparent triage/ranking scores, not probabilities of guilt.*
+---
+
+### 2. Clone Repository
+```bash
+git clone https://github.com/senvidit4-alt/Ocean-Trace-v2.0.git
+cd Ocean-Trace-v2.0
+```
+
+---
+
+### 3. Backend Setup (FastAPI + AI Pipeline)
+
+```bash
+# 1. Create and activate a virtual environment
+python -m venv venv
+
+# Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+# Linux / macOS:
+source venv/bin/activate
+
+# 2. Install all Python dependencies
+pip install -r requirements.txt
+
+# 3. (Optional) Copy environment template if custom configs are needed
+cp .env.example .env
+
+# 4. Start the backend server
+python main.py
+```
+> 🛰️ Backend runs at: **`http://localhost:8000`**  
+> 📖 Interactive Swagger API Docs: **`http://localhost:8000/docs`**  
+> 🩺 Health Check: **`http://localhost:8000/api/health`**
+
+---
+
+### 4. Frontend Setup (Interactive Ocean Trace Console)
+
+In a new terminal window:
+
+```bash
+# 1. Navigate to the frontend directory
+cd ocean-trace-frontend
+
+# 2. Install frontend dependencies
+npm install
+
+# 3. Start the Vite dev server
+npm run dev
+```
+> 🖥️ Web Console live at: **`http://localhost:5173`** (or port indicated in terminal)
+
+---
+
+## 🏗️ System Architecture & Data Flow
+
+The system operates across three decoupled modules communicating via explicit JSON contracts:
+
+```
+[ Sentinel-1 SAR Image ]
+          │
+          ▼
+┌────────────────────────────────────────┐
+│  MODULE 1: SAR Oil Spill Detection     │  ──► detection.json
+│  • ResNet-34 U-Net (PyTorch)           │      (Polygons, area, confidence)
+└────────────────────────────────────────┘
+          │
+          ▼
+┌────────────────────────────────────────┐
+│  MODULE 2: Backward Drift Simulation   │  ──► reconstruction.json & .nc
+│  • OpenDrift / CMEMS Current + ERA5    │      (Origin area, release time, radius)
+└────────────────────────────────────────┘
+          │
+          ▼
+┌────────────────────────────────────────┐
+│  MODULE 3: AIS Vessel Attribution      │  ──► attribution.json
+│  • Spatio-Temporal KD-Tree Matcher     │      (Ranked vessel candidates,
+│  • Transparent 5-Factor Evidence Score │       proximity, speed anomalies)
+└────────────────────────────────────────┘
+```
+
+---
+
+## 📦 Directory Structure
+
+```
+Ocean-Trace-v2.0/
+├── backend/
+│   ├── __init__.py
+│   └── main.py                     # FastAPI REST API endpoints
+├── ocean-trace-frontend/           # Interactive Web UI Console
+│   ├── index.html                  # Dashboard & geospatial visualization
+│   ├── src/styles.css              # Custom styling
+│   ├── vite.config.js              # Vite server & proxy configuration
+│   └── package.json
+├── modules/
+│   ├── 01_detection/               # SAR AI model inference, train & validation
+│   ├── 02_drift/                   # Hydrodynamic environmental forcing & OpenDrift
+│   └── 03_attribution/             # AIS ingestion & multi-factor evidence ranking
+├── data/
+│   ├── samples/                    # Sample AIS CSV & synthetic forcing NetCDF
+│   └── AIS_178834011589976755_1814-1788340116592.csv # Gulf of Mexico AIS telemetry
+├── contracts/                      # JSON schemas for inter-module handoffs
+├── docs/                           # Architecture specifications & validation guides
+├── unet_spill_best.pth             # Trained deep learning model checkpoint
+├── run_pipeline.py                 # Full CLI pipeline runner
+├── test_backend_api.py             # Integration test suite for backend API
+├── requirements.txt                # Unified Python dependencies
+├── .env.example                    # Environment variable template
+└── main.py                         # Root entrypoint (`python main.py`)
+```
+
+---
+
+## 🧪 Testing & Verification
+
+Run the automated backend test suite to verify all endpoints, AI inference, and simulation handoffs:
+
+```bash
+python test_backend_api.py
+```
+
+Run the complete pipeline end-to-end via CLI:
+
+```bash
+python run_pipeline.py --input-synthetic --output-dir outputs
+```
+
+---
+
+## 👥 Team
+- **Team Ocean Trace (SIH)**

@@ -1,34 +1,28 @@
-# Environment
+# Environment & Python
 venv/
+.venv/
+env/
 __pycache__/
 *.pyc
+*.pyo
 .ipynb_checkpoints/
 
-# Data
-data/*.nc
-data/*.csv
-data/*.tif
-data/model_weights/
-data/samples/*.tmp
-*.nc
-*.csv
-*.tif
-
-# Outputs
-outputs/bay_marchand/*
-!outputs/bay_marchand/.gitkeep
-test_*_output.png
-*.png
-
-# Models
-*.pth
-*.pt
-
-# IDE
+# IDE & OS
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
 
-# Datasets & Large Archives
+# Frontend & Node
+node_modules/
+dist/
+ocean-trace-frontend/node_modules/
+ocean-trace-frontend/dist/
+.env
+.env.local
+*.log
+
+# Large raw datasets & archives (>100MB)
 dataset/
 zenodo_test/
 raw_dataset/
@@ -36,18 +30,23 @@ raw_dataset/
 *.zip
 *.tar
 *.tar.gz
-*.tiff
-*.TIFF
+S1A_IW_GRDH_*.tif
+S1A_IW_GRDH_*.tiff
 
-# Temporary and local experiment artifacts
+# Temporary Uploads & User runtime staging
+uploads/
+scratch/
+threshold_sweep/
 handoff_output*.json
 before_level1*
-threshold_sweep/
 
+# Model Checkpoint backups (keep only primary unet_spill_best.pth)
+*_backup*.pth
+*_latest_backup*.pth
+*_OLD.pth
+unet_pretrained_best.pth
 
-# Local scratch scripts
-render_*.py
-visualize_synthetic.py
-inspect_clusters.py
-generate_synthetic_data.py
-
+# Outputs (keep directory structure via .gitkeep)
+outputs/*
+!outputs/.gitkeep
+!outputs/bay_marchand/.gitkeep

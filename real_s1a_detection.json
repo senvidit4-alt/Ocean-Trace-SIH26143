@@ -1,0 +1,17 @@
+{
+  "contract_version": "1.0",
+  "observation_time": "2026-09-13T13:23:46.853706+00:00",
+  "detection_timestamp": "2026-09-13T13:23:46.853706+00:00",
+  "polygon": null,
+  "slick_polygon": null,
+  "area_km2": 0.0,
+  "age_hrs": 0.0,
+  "estimated_age_hours": 0.0,
+  "confidence": 0.0,
+  "georeference_status": "REAL",
+  "metadata": {
+    "satellite": "Sentinel-1",
+    "threshold": 0.7,
+    "georeference_status": "REAL"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "contract_version": "1.0",
+  "analysis_metadata": {
+    "search_radius_km": 9.051554012033503,
+    "search_time_window": [
+      "2026-09-14T15:36:35.244685Z",
+      "2026-09-14T21:36:35.244685Z"
+    ],
+    "n_vessels_considered": 0,
+    "caveats": [
+      "Reader 'synthetic_regional' does not cover observation_time=2026-09-14 21:36:35.244685 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
+      "Reader 'synthetic_regional' does not cover origin_time=2026-09-14 15:36:35.244685 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
+      "Reader 'synthetic_regional' does not spatially cover 128 of 128 seeded particle positions (reader coverage: 72.20-72.80E, 18.60-19.20N); fallback values were used for those particles.",
+      "No vessels found at nominal radius of 4.5 km; results use an expanded radius of 9.1 km."
+    ]
+  },
+  "candidates": []
+}

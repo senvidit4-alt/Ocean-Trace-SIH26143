@@ -1,0 +1,7 @@
+{
+  "status": "invalid_input",
+  "message": "Uploaded file does not appear to be a valid SAR satellite image. Expected Sentinel-1 characteristics (1-2 band radar backscatter data) were not found. Found 3 bands (expected 1 or 2 bands for Sentinel-1 VV/VH polarizations; 3-4 bands indicate photographic RGB/RGBA data).",
+  "slick_polygon": null,
+  "polygon": null,
+  "area_km2": null
+}
