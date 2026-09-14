@@ -107,18 +107,9 @@ def get_cached_ais_dataset(path: Optional[Path] = None):
 
 @app.on_event("startup")
 def startup_preload_cache():
-    try:
-        app.state.spill_model = get_cached_model()
-        logger.info("Spill model cached in app.state.spill_model")
-    except Exception as e:
-        logger.warning(f"Could not pre-load spill model: {e}")
-        app.state.spill_model = None
-    try:
-        app.state.ais_dataset = get_cached_ais_dataset()
-        logger.info("AIS dataset cached in app.state.ais_dataset")
-    except Exception as e:
-        logger.warning(f"Could not pre-load AIS dataset: {e}")
-        app.state.ais_dataset = None
+    logger.info("OceanTrace FastAPI initialized. Ready to receive traffic. Models and AIS datasets configured for lazy on-demand caching.")
+    app.state.spill_model = None
+    app.state.ais_dataset = None
 
 
 # Helper serialization utilities
