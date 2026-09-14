@@ -4654,7 +4654,15 @@ async function runBackendPipeline(fileOrPath){
       });
     }
 
-    if (!res.ok) throw new Error(`Backend pipeline HTTP ${res.status}`);
+    if (!res.ok) {
+      let errDetail = `HTTP ${res.status}`;
+      try {
+        const errJson = await res.json();
+        if (errJson.detail) errDetail += ` - ${errJson.detail}`;
+        else if (errJson.message) errDetail += ` - ${errJson.message}`;
+      } catch (_) {}
+      throw new Error(errDetail);
+    }
     const data = await res.json();
 
     // On completion: 100% progress and transition to detection view
