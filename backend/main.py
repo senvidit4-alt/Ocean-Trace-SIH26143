@@ -34,25 +34,15 @@ sys.path.insert(0, str(_repo_root / "modules/02_drift/03_source_reconstruction/s
 sys.path.insert(0, str(_repo_root / "modules/03_attribution/04_ais_trajectory/src"))
 sys.path.insert(0, str(_repo_root / "modules/03_attribution/05_evidence_fusion/src"))
 
-# Module imports
-from inference import detect_spill
-from model import load_spill_model
-from run_pipeline import (
-    convert_multipolygon_to_polygon,
-    parse_observation_time,
-    find_ais_csv,
-    run_full_pipeline,
-)
-from source_reconstruction import reconstruct_source, SourceReconstruction
-import make_synthetic_environment
-from ais_trajectory import AISDataset
-from evidence_fusion import evaluate_candidates, generate_report, AttributionResult
-from adapters import (
-    load_detection_json,
-    load_reconstruction_json,
-    save_reconstruction_json,
-    save_attribution_json,
-)
+# Helper to find AIS CSV without importing heavy modules
+def find_ais_csv(data_dir: Path) -> Optional[Path]:
+    for cand in [
+        data_dir / "AIS_178834011589976755_1814-1788340116592.csv",
+        data_dir / "samples" / "sample_ais.csv",
+    ]:
+        if cand.exists():
+            return cand
+    return None
 
 # Configure logging
 logging.basicConfig(
@@ -113,11 +103,11 @@ def startup_preload_cache():
 
 
 # Helper serialization utilities
-def reconstruction_to_dict(recon: Optional[SourceReconstruction]) -> Optional[Dict[str, Any]]:
+def reconstruction_to_dict(recon: Optional[Any]) -> Optional[Dict[str, Any]]:
     """Converts a SourceReconstruction dataclass into a JSON-serializable dictionary."""
     if recon is None:
         return None
-    d = recon.to_dict()
+    d = recon.to_dict() if hasattr(recon, "to_dict") else dict(recon)
     d["contract_version"] = "1.0"
     if "origin_positions" in d and isinstance(d["origin_positions"], dict):
         if hasattr(d["origin_positions"].get("lon"), "tolist"):
@@ -127,7 +117,7 @@ def reconstruction_to_dict(recon: Optional[SourceReconstruction]) -> Optional[Di
     return d
 
 
-def attribution_to_dict(result: Optional[AttributionResult]) -> Optional[Dict[str, Any]]:
+def attribution_to_dict(result: Optional[Any]) -> Optional[Dict[str, Any]]:
     """Converts an AttributionResult dataclass into a JSON-serializable dictionary."""
     if result is None:
         return None
