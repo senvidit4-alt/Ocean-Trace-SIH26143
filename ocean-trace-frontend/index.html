@@ -2272,6 +2272,7 @@ setTheme(recall("ot-theme") || "auto");
    beyond an optional "remember me" flag.
    ============================================================= */
 const DEMO_OTP = "408173";
+function hashStr(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h,16777619); } return Math.abs(h); }
 const SESSION = { name:"A. Sharma", email:"officer@oceantrace.in", role:"investigator", id:"NTRO-4417" };
 const SIGNED_IN_AT = new Date("2026-09-09T05:40:00+05:30").getTime();
 const ROLE_LABEL = { analyst:"Analyst", investigator:"Investigator", admin:"Administrator" };
@@ -4623,9 +4624,9 @@ async function runBackendPipeline(fileOrPath){
 
   addFeed("info", istTime(Date.now()), "Backend Inference", `Dispatching <code>${fileName}</code> to real satellite U-Net segmenter & drift physics.`);
 
-  const API_BASE = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL)
-    ? import.meta.env.VITE_API_URL.replace(/\/$/, "")
-    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:8000" : "https://ocean-trace-v2-0.onrender.com");
+  const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:8000"
+    : "https://ocean-trace-v2-0.onrender.com";
 
   try {
     let res;
