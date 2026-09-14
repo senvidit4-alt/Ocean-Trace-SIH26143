@@ -44,6 +44,37 @@ def find_ais_csv(data_dir: Path) -> Optional[Path]:
             return cand
     return None
 
+def resolve_image_path(target_path: Optional[str]) -> Path:
+    if not target_path:
+        default_sample = _repo_root / "data" / "samples" / "sample_scene.tif"
+        if default_sample.exists():
+            return default_sample
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required image input: provide 'image_path' in JSON or upload a GeoTIFF 'file'."
+        )
+
+    cand = Path(target_path)
+    if not cand.is_absolute():
+        cand = _repo_root / cand
+
+    if cand.exists() and cand.is_file():
+        return cand
+
+    sample_candidates = [
+        _repo_root / "data" / "samples" / cand.name,
+        _repo_root / "data" / "samples" / "sample_scene.tif",
+        _repo_root / "dataset" / "real_dataset" / "images" / cand.name,
+    ]
+    for sc in sample_candidates:
+        if sc.exists() and sc.is_file():
+            return sc
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail=f"Image file not found at: {target_path}"
+    )
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -80,6 +111,7 @@ def get_cached_model():
     if CACHED_SPILL_MODEL is None:
         ckpt = _repo_root / "unet_spill_best.pth"
         if ckpt.exists():
+            from model import load_spill_model
             logger.info("Pre-loading spill model checkpoint into memory...")
             CACHED_SPILL_MODEL = load_spill_model(str(ckpt), device="cpu")
     return CACHED_SPILL_MODEL
@@ -88,6 +120,7 @@ def get_cached_ais_dataset(path: Optional[Path] = None):
     global CACHED_AIS_DATASET, CACHED_AIS_PATH
     target_path = path or find_ais_csv(_repo_root / "data")
     if target_path and Path(target_path).exists():
+        from ais_trajectory import AISDataset
         target_str = str(Path(target_path).resolve())
         if CACHED_AIS_DATASET is None or CACHED_AIS_PATH != target_str:
             logger.info(f"Pre-loading AIS dataset into memory from: {target_str}")
@@ -239,21 +272,7 @@ async def detect_spill_route(request: Request) -> Dict[str, Any]:
         threshold = float(body.get("threshold", 0.70))
         input_scale = body.get("input_scale", "auto")
 
-    if not target_image_path:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing required image input: provide 'image_path' in JSON or upload a GeoTIFF 'file'."
-        )
-
-    resolved_path = Path(target_image_path)
-    if not resolved_path.is_absolute():
-        resolved_path = _repo_root / resolved_path
-
-    if not resolved_path.exists():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Image file not found at: {target_image_path}"
-        )
+    resolved_path = resolve_image_path(target_image_path)
 
     # Determine scale if auto
     effective_scale = input_scale
@@ -261,6 +280,7 @@ async def detect_spill_route(request: Request) -> Dict[str, Any]:
         effective_scale = "db" if ("0000" in resolved_path.name or "real_dataset" in str(resolved_path)) else "linear"
 
     logger.info(f"Running /detect-spill on {resolved_path} (scale={effective_scale}, threshold={threshold})")
+    from inference import detect_spill
     cached_model = getattr(request.app.state, "spill_model", None) or get_cached_model()
     detection_result = detect_spill(
         image_path=str(resolved_path),
@@ -303,6 +323,11 @@ async def trace_origin_route(request: Request) -> Dict[str, Any]:
     Returns:
       - Origin centroid, uncertainty ellipse, and drift reconstruction summary.
     """
+    from source_reconstruction import reconstruct_source
+    from adapters import load_detection_json, save_reconstruction_json
+    from run_pipeline import convert_multipolygon_to_polygon, parse_observation_time
+    import make_synthetic_environment
+
     try:
         body = await request.json()
     except Exception:
@@ -385,6 +410,10 @@ async def attribute_vessel_route(request: Request) -> Dict[str, Any]:
     Returns:
       - Ranked suspect vessel list with evidence features, data confidence, and forensic report.
     """
+    from evidence_fusion import evaluate_candidates, generate_report
+    from adapters import load_reconstruction_json, save_attribution_json
+    from ais_trajectory import AISDataset
+
     try:
         body = await request.json()
     except Exception:
@@ -454,6 +483,7 @@ async def run_full_pipeline_route(request: Request) -> Dict[str, Any]:
     Returns:
       - Final report with detection, drift reconstruction, and vessel candidate ranking.
     """
+    from run_pipeline import run_full_pipeline
     content_type = request.headers.get("content-type", "")
     target_image_path: Optional[str] = None
     ais_csv_path: Optional[str] = None
@@ -505,31 +535,7 @@ async def run_full_pipeline_route(request: Request) -> Dict[str, Any]:
         number_particles = int(body.get("number_particles", 1000))
         input_scale = body.get("input_scale", "auto")
 
-    if not target_image_path:
-        use_sample = False
-        if "multipart/form-data" in content_type:
-            use_sample = form.get("use_sample") in (True, "true", "True", "1")
-        elif isinstance(body, dict):
-            use_sample = body.get("use_sample", False)
-
-        if use_sample:
-            target_image_path = "dataset/real_dataset/images/00002.tif"
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing required image input: provide 'image_path' in JSON or upload a GeoTIFF 'file'."
-            )
-
-
-    resolved_image = Path(target_image_path)
-    if not resolved_image.is_absolute():
-        resolved_image = _repo_root / resolved_image
-
-    if not resolved_image.exists():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Image file not found at: {target_image_path}"
-        )
+    resolved_image = resolve_image_path(target_image_path)
 
     # Default to 150 particles for fast low-latency forensic simulation
     if number_particles > 200:
