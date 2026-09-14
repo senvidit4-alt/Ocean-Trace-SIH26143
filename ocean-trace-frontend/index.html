@@ -4623,6 +4623,10 @@ async function runBackendPipeline(fileOrPath){
 
   addFeed("info", istTime(Date.now()), "Backend Inference", `Dispatching <code>${fileName}</code> to real satellite U-Net segmenter & drift physics.`);
 
+  const API_BASE = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_URL)
+    ? import.meta.env.VITE_API_URL.replace(/\/$/, "")
+    : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:8000" : "https://ocean-trace-v2-0.onrender.com");
+
   try {
     let res;
     if (fileOrPath instanceof File) {
@@ -4631,13 +4635,13 @@ async function runBackendPipeline(fileOrPath){
       fd.append("threshold", "0.50");
       fd.append("search_window_hours", "6.0");
       fd.append("number_particles", "1000");
-      res = await fetch("http://localhost:8000/run-full-pipeline", {
+      res = await fetch(`${API_BASE}/run-full-pipeline`, {
         method: "POST",
         body: fd
       });
     } else {
       const pathStr = typeof fileOrPath === "string" ? fileOrPath : "dataset/real_dataset/images/00002.tif";
-      res = await fetch("http://localhost:8000/run-full-pipeline", {
+      res = await fetch(`${API_BASE}/run-full-pipeline`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -4735,7 +4739,7 @@ async function runBackendPipeline(fileOrPath){
     clearInterval(progressTimer);
     console.error("Backend pipeline error:", err);
     addFeed("critical", istTime(Date.now()), "Pipeline Error", `Failed to run backend: ${err.message}`);
-    alert("Backend connection error: " + err.message + "\\nMake sure FastAPI is running on port 8000.");
+    alert("Backend connection error: " + err.message + "\\nBackend endpoint: " + API_BASE);
   } finally {
     clearInterval(progressTimer);
     if (btn) { btn.disabled = false; btn.textContent = "⚡ Live Backend Pipeline (00002.tif)"; }
