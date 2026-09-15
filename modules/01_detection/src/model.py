@@ -7,14 +7,14 @@ import torch.nn as nn
 import segmentation_models_pytorch as smp
 
 
-def build_model():
+def build_model(encoder_weights="imagenet"):
     """
     Builds a U-Net model with a pretrained ResNet34 encoder from segmentation_models_pytorch.
-    Adapts ImageNet weights (3-channel) automatically to 1-channel grayscale SAR input.
+    Adapts weights automatically to 1-channel grayscale SAR input.
     """
     return smp.Unet(
         encoder_name="resnet34",
-        encoder_weights="imagenet",
+        encoder_weights=encoder_weights,
         in_channels=1,
         classes=1,
     )
@@ -127,9 +127,11 @@ def load_spill_model(model_path: str = "unet_spill_best.pth", device: str = "cpu
     Loads trained spill checkpoint into the ResNet34 U-Net architecture.
     Searches multiple standard locations to guarantee out-of-the-box loading.
     """
+    import gc
     from pathlib import Path
     dev = torch.device(device)
-    model = build_model().to(dev)
+    # Avoid allocating ImageNet weights when loading custom checkpoint weights
+    model = build_model(encoder_weights=None).to(dev)
 
     candidates = [
         Path(model_path),
@@ -147,6 +149,8 @@ def load_spill_model(model_path: str = "unet_spill_best.pth", device: str = "cpu
     if resolved_path is not None:
         state = torch.load(str(resolved_path), map_location=dev)
         model.load_state_dict(state)
+        del state
+        gc.collect()
     model.eval()
     return model
 

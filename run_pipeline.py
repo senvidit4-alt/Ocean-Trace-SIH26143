@@ -18,6 +18,11 @@ import json
 import logging
 import os
 import sys
+
+# Headless configuration for matplotlib/opendrift
+os.environ["MPLBACKEND"] = "Agg"
+os.environ["MPLCONFIGDIR"] = os.environ.get("MPLCONFIGDIR", "/tmp/matplotlib")
+
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, Union

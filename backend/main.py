@@ -18,6 +18,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+# Optimize environment variables for headless cloud deployment (eliminate font cache / UI overhead)
+os.environ["MPLBACKEND"] = "Agg"
+os.environ["MPLCONFIGDIR"] = os.environ.get("MPLCONFIGDIR", "/tmp/matplotlib")
+
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -113,8 +117,11 @@ def get_cached_model():
     if CACHED_SPILL_MODEL is None:
         ckpt = _repo_root / "unet_spill_best.pth"
         if ckpt.exists():
+            import torch
             from model import load_spill_model
-            logger.info("Pre-loading spill model checkpoint into memory...")
+            logger.info("Pre-loading spill model checkpoint into memory (eval mode, no grad)...")
+            torch.set_grad_enabled(False)
+            torch.set_num_threads(1)
             CACHED_SPILL_MODEL = load_spill_model(str(ckpt), device="cpu")
     return CACHED_SPILL_MODEL
 
@@ -132,9 +139,23 @@ def get_cached_ais_dataset(path: Optional[Path] = None):
 
 @app.on_event("startup")
 def startup_preload_cache():
-    logger.info("OceanTrace FastAPI initialized. Ready to receive traffic. Models and AIS datasets configured for lazy on-demand caching.")
-    app.state.spill_model = None
-    app.state.ais_dataset = None
+    import torch
+    import psutil
+    torch.set_grad_enabled(False)
+    torch.set_num_threads(1)
+
+    # Eagerly preload PyTorch model and AIS dataset ONCE at server startup
+    app.state.spill_model = get_cached_model()
+    app.state.ais_dataset = get_cached_ais_dataset()
+
+    process = psutil.Process(os.getpid())
+    rss_mb = process.memory_info().rss / (1024 * 1024)
+    logger.info("=" * 60)
+    logger.info("OceanTrace FastAPI Initialized & Preloaded Successfully")
+    logger.info(f"Baseline Startup Memory: {rss_mb:.2f} MB (Render Limit: 512 MB)")
+    logger.info(f"Model Preloaded: {app.state.spill_model is not None}")
+    logger.info(f"AIS Dataset Preloaded: {app.state.ais_dataset is not None}")
+    logger.info("=" * 60)
 
 
 # Helper serialization utilities

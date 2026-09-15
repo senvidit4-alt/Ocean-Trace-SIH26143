@@ -247,16 +247,19 @@ def _resolve_columns(raw_columns) -> dict:
 
 def load_ais_csv(csv_path: str) -> tuple:
     """Read-only load: CSV -> (cleaned DataFrame, LoadReport). Never writes
-    to csv_path. Cleaning order matches the approved design: parse timestamps
-    -> validate core fields -> duplicate handling (both exact-row dedup and
-    (mmsi, time) duplicate flagging, computed on the actual loaded data)."""
+    to csv_path. Optimized for ultra-low memory footprint by specifying downcasted
+    dtypes and reclaiming intermediate allocations."""
+    import gc
     raw = pd.read_csv(csv_path, low_memory=False)
     rows_read = len(raw)
     warnings = []
 
     colmap = _resolve_columns(raw.columns)
     df = pd.DataFrame({canonical: raw[raw_col] for canonical, raw_col in colmap.items()})
-    df['source_row'] = np.arange(rows_read)  # provenance + deterministic tiebreak, see module docstring
+    del raw
+    gc.collect()
+
+    df['source_row'] = np.arange(rows_read, dtype=np.int32)  # provenance + deterministic tiebreak
 
     # --- 2. Timestamp parsing --------------------------------------------
     df['time'] = pd.to_datetime(df['time'], errors='coerce')
@@ -277,6 +280,20 @@ def load_ais_csv(csv_path: str) -> tuple:
     if n_heading_sentinel:
         warnings.append(f"{n_heading_sentinel} Heading values were the AIS 'not available' "
                          f"sentinel ({HEADING_NOT_AVAILABLE}) -- set to NaN, rows kept.")
+
+    # Downcast core numeric columns to float32
+    for c in ['lat', 'lon', 'sog', 'cog', 'heading']:
+        df[c] = df[c].astype(np.float32)
+
+    # Downcast metadata numeric columns
+    for num_col in ['length', 'width', 'draft']:
+        if num_col in df.columns:
+            df[num_col] = pd.to_numeric(df[num_col], errors='coerce').astype(np.float32)
+
+    # Downcast categorical columns
+    for cat_col in ['vessel_type', 'status', 'transceiver_class', 'cargo']:
+        if cat_col in df.columns:
+            df[cat_col] = df[cat_col].astype('category')
 
     # --- 3. Core navigation-field validation -------------------------------
     missing_core_mask = df['mmsi'].isna() | df['time'].isna() | df['lat'].isna() | df['lon'].isna()
@@ -314,6 +331,7 @@ def load_ais_csv(csv_path: str) -> tuple:
     # index as an explicit tiebreak (never rely on an implicit stable-sort
     # assumption for this).
     df = df.sort_values(['mmsi', 'time', 'source_row']).reset_index(drop=True)
+    gc.collect()
 
     report = LoadReport(
         rows_read=rows_read,
