@@ -87,6 +87,8 @@ def detect_spill(
             georeference_status = "SYNTHETIC_PLACEHOLDER"
 
         # Fast decimation on read for swaths > 2048 to enable lightning-fast inference in seconds
+        import gc
+        torch.set_num_threads(1)
         max_proc_dim = 2048
         if orig_h > max_proc_dim or orig_w > max_proc_dim:
             decimate = max(1, orig_h // max_proc_dim, orig_w // max_proc_dim)
@@ -160,6 +162,12 @@ def detect_spill(
             }
     except Exception as e:
         print(f"Warning: could not generate preview images: {e}")
+
+    try:
+        del img
+        gc.collect()
+    except Exception:
+        pass
 
     if single_slick_max_km2 > MAX_PLAUSIBLE_AREA_KM2:
         print(
