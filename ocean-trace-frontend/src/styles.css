@@ -2089,3 +2089,25 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   border-radius:8px; padding:14px; margin-top:6px;
 }
+
+/* Global Maritime Corridors & Real AIS Layer */
+#lyr-global-traffic {
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+#lyr-global-traffic .corridors-group path {
+  stroke: rgba(56, 189, 248, 0.32);
+  stroke-width: 1.2px;
+  stroke-dasharray: 5, 4;
+}
+#lyr-global-traffic .real-ais-group path {
+  stroke: rgba(56, 189, 248, 0.42);
+  stroke-width: 0.95px;
+}
+#lyr-global-traffic .real-ais-group circle {
+  fill: #38bdf8;
+  stroke: rgba(2, 132, 199, 0.85);
+  stroke-width: 0.7px;
+  filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.5));
+}
+

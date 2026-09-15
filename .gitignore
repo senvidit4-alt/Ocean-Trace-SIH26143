@@ -30,8 +30,9 @@ raw_dataset/
 *.zip
 *.tar
 *.tar.gz
-S1A_IW_GRDH_*.tif
-S1A_IW_GRDH_*.tiff
+*.tif
+*.tiff
+bay_marchand_aug29_*.tif
 
 # Temporary Uploads & User runtime staging
 uploads/

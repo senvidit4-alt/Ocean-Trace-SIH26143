@@ -196,17 +196,9 @@ def run_full_pipeline(
         raise FileNotFoundError(f"Model checkpoint not found at: {checkpoint_path}")
 
     # Determine input scale if set to 'auto'
-    if input_scale == "auto":
-        # Check if Zenodo/real benchmark scene which is stored in dB scale
-        with rasterio.open(image_path) as src:
-            sample_val = src.read(1, window=rasterio.windows.Window(0, 0, min(100, src.width), min(100, src.height)))
-            # If negative values exist (e.g. -15 dB), it's in dB
-            if (sample_val < 0).any() or "real_dataset" in str(image_path):
-                effective_scale = "db"
-            else:
-                effective_scale = "linear"
-    else:
-        effective_scale = input_scale
+    effective_scale = input_scale
+    if effective_scale == "auto":
+        effective_scale = "db" if ("0000" in Path(image_path).name or "real_dataset" in str(image_path)) else "linear"
 
     logger.info(f"Using input_scale='{effective_scale}' for SAR inference (threshold={threshold})")
 

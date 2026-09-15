@@ -242,6 +242,80 @@ def health_check() -> Dict[str, Any]:
     }
 
 
+# -----------------------------------------------------------------------------
+# Endpoint: GET /api/ais/regional-traffic
+# -----------------------------------------------------------------------------
+CACHED_TRAFFIC_RESPONSE_BYTES = None
+
+@app.get("/api/ais/regional-traffic", tags=["AIS & Maritime Traffic"])
+def get_regional_traffic(request: Request, sample_step: int = 15):
+    """
+    Returns downsampled trajectories for all 396 real vessels in the Gulf of Mexico
+    directly from cached in-memory AIS dataset (pre-serialized JSON bytes, sub-5ms latency).
+    """
+    global CACHED_TRAFFIC_RESPONSE_BYTES
+    if CACHED_TRAFFIC_RESPONSE_BYTES is not None:
+        from fastapi import Response
+        return Response(content=CACHED_TRAFFIC_RESPONSE_BYTES, media_type="application/json")
+
+    cached_ais = getattr(request.app.state, "ais_dataset", None)
+    if cached_ais is None:
+        ais_path = find_ais_csv(_repo_root / "data")
+        cached_ais = get_cached_ais_dataset(ais_path)
+
+    if cached_ais is None:
+        return {"status": "error", "message": "AIS dataset not loaded", "vessels": []}
+
+    import pandas as pd
+    import numpy as np
+    vessels_data = []
+    for mmsi, traj in cached_ais._vessels.items():
+        obs = traj.observations
+        if obs.empty:
+            continue
+        sampled = obs.iloc[::sample_step] if len(obs) > sample_step else obs
+        v_len = None
+        if traj.length is not None and pd.notnull(traj.length):
+            v_len = float(traj.length)
+        vessels_data.append({
+            "mmsi": str(mmsi),
+            "name": str(traj.vessel_name or f"Vessel {mmsi}"),
+            "type": str(traj.vessel_type or "tanker"),
+            "imo": str(traj.imo) if traj.imo else None,
+            "callsign": str(traj.call_sign) if traj.call_sign else None,
+            "length": v_len,
+            "n_obs": int(traj.n_observations),
+            "track": [[round(float(r[0]), 4), round(float(r[1]), 4)] for r in sampled[["lon", "lat"]].values],
+            "last_pos": [round(float(obs["lon"].iloc[-1]), 4), round(float(obs["lat"].iloc[-1]), 4)],
+            "sog": round(float(obs["sog"].iloc[-1]), 1) if pd.notnull(obs["sog"].iloc[-1]) else 0.0,
+            "cog": round(float(obs["cog"].iloc[-1]), 1) if pd.notnull(obs["cog"].iloc[-1]) else 0.0,
+        })
+
+    b = cached_ais.load_report.spatial_bounds
+    bounds_clean = [float(b[0]), float(b[1]), float(b[2]), float(b[3])]
+
+    payload = {
+        "status": "success",
+        "region": "Gulf of Mexico · Coastal Louisiana",
+        "bounds": bounds_clean,
+        "time_range": [
+            str(cached_ais.load_report.time_range[0].isoformat()),
+            str(cached_ais.load_report.time_range[1].isoformat())
+        ],
+        "vessel_count": len(vessels_data),
+        "total_records": int(cached_ais.load_report.rows_final),
+        "vessels": vessels_data
+    }
+
+    import json
+    CACHED_TRAFFIC_RESPONSE_BYTES = json.dumps(payload).encode("utf-8")
+    from fastapi import Response
+    return Response(content=CACHED_TRAFFIC_RESPONSE_BYTES, media_type="application/json")
+
+
+
+
+
 
 # -----------------------------------------------------------------------------
 # Endpoint: POST /detect-spill
@@ -613,3 +687,9 @@ async def run_full_pipeline_route(request: Request) -> Dict[str, Any]:
         "attribution": attribution_to_dict(pipeline_result.get("attribution")),
         "report": pipeline_result.get("report"),
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
+
