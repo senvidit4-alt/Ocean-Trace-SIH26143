@@ -288,11 +288,17 @@ def _preprocess_tile(tile, input_scale="linear"):
     return norm, valid_mask
 
 
+_CACHED_LAND_GEOM = None
+
 def _load_land_mask(land_geojson_path="gulf_coast_land.geojson", buffer_km=1.0):
     """
     Loads land geometry and applies a coastal buffer outward into the ocean (in kilometers).
-    Uses local GeoJSON if available, and falls back to fetching Natural Earth 10m online.
+    Uses local GeoJSON if available.
     """
+    global _CACHED_LAND_GEOM
+    if _CACHED_LAND_GEOM is not None:
+        return _CACHED_LAND_GEOM
+
     import os
     land_geom = None
     if not os.path.exists(land_geojson_path):
@@ -307,33 +313,11 @@ def _load_land_mask(land_geojson_path="gulf_coast_land.geojson", buffer_km=1.0):
         except Exception as e:
             print(f"Warning: Could not read local land mask {land_geojson_path}: {e}")
 
-    if land_geom is None:
-        try:
-            import requests
-            url = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_land.geojson"
-            r = requests.get(url, timeout=10)
-            if r.status_code == 200:
-                ne_data = r.json()
-                from shapely.geometry import box
-                bbox = box(-92.0, 27.0, -87.0, 31.0)
-                intersecting = [
-                    shape(feat["geometry"]).intersection(bbox)
-                    for feat in ne_data["features"]
-                    if shape(feat["geometry"]).intersects(bbox)
-                ]
-                if intersecting:
-                    land_geom = unary_union(intersecting)
-                    with open(land_geojson_path, "w") as f:
-                        json.dump(mapping(land_geom), f)
-        except Exception as e:
-            print(f"Warning: Could not fetch Natural Earth land mask: {e}")
-            return None
-
     if land_geom is not None and buffer_km > 0:
-        # Approximate degrees per km in Gulf of Mexico (lat ~29 deg: ~105 km per deg)
         deg_buf = buffer_km / 105.0
         land_geom = land_geom.buffer(deg_buf)
 
+    _CACHED_LAND_GEOM = land_geom
     return land_geom
 
 
