@@ -89,16 +89,18 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 app = FastAPI(
     title="OceanTrace Forensic Backend API",
     description="End-to-end satellite oil spill detection, drift reconstruction, and AIS vessel attribution API.",
-    version="1.0.1",
+    version="1.0.2",
 )
 
-# Step 5: CORS Middleware setup (allow all origins for hackathon development)
+# Step 5: CORS Middleware setup (Universal browser compatibility for Vercel and local origins)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_origin_regex=r"^https?://.*",
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Startup preloading & in-memory caching (Performance fix: avoids disk reloads)
@@ -194,7 +196,7 @@ def health_check() -> Dict[str, Any]:
     return {
         "status": "ok",
         "service": "OceanTrace Forensic API",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "modules": {
             "module_1_detection": {
                 "name": "Oil Spill SAR Segmentation (U-Net)",

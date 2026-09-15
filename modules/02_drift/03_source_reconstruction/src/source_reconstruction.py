@@ -300,6 +300,8 @@ def reconstruct_source(
     # timestep falls outside reader coverage, use 0 rather than NaN/crash.
     # _check_coverage() below is what makes it VISIBLE when this safety net
     # actually gets used, rather than leaving it silent.
+    o.set_config('general:use_auto_landmask', False)
+    o.set_config('environment:fallback:land_binary_mask', 0)
     o.set_config('environment:fallback:x_wind', 0.0)
     o.set_config('environment:fallback:y_wind', 0.0)
     o.set_config('environment:fallback:x_sea_water_velocity', 0.0)
