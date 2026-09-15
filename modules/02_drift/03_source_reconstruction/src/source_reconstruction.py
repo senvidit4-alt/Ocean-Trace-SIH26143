@@ -306,6 +306,9 @@ def reconstruct_source(
     o.set_config('environment:fallback:y_wind', 0.0)
     o.set_config('environment:fallback:x_sea_water_velocity', 0.0)
     o.set_config('environment:fallback:y_sea_water_velocity', 0.0)
+    o.set_config('processes:evaporation', False)
+    o.set_config('processes:emulsification', False)
+    o.set_config('processes:dispersion', False)
 
     readers = get_readers(env_mode, **env_kwargs)
     if readers:

@@ -89,7 +89,7 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 app = FastAPI(
     title="OceanTrace Forensic Backend API",
     description="End-to-end satellite oil spill detection, drift reconstruction, and AIS vessel attribution API.",
-    version="1.0.2",
+    version="1.0.3",
 )
 
 # Step 5: CORS Middleware setup (Universal browser compatibility for Vercel and local origins)
@@ -196,7 +196,7 @@ def health_check() -> Dict[str, Any]:
     return {
         "status": "ok",
         "service": "OceanTrace Forensic API",
-        "version": "1.0.2",
+        "version": "1.0.3",
         "modules": {
             "module_1_detection": {
                 "name": "Oil Spill SAR Segmentation (U-Net)",
@@ -539,9 +539,9 @@ async def run_full_pipeline_route(request: Request) -> Dict[str, Any]:
 
     resolved_image = resolve_image_path(target_image_path)
 
-    # Default to 150 particles for fast low-latency forensic simulation
-    if number_particles > 200:
-        number_particles = 150
+    # Default to 80 particles for sub-second low-latency cloud simulation
+    if number_particles > 80:
+        number_particles = 80
 
     from starlette.concurrency import run_in_threadpool
     logger.info(f"Calling run_full_pipeline on {resolved_image} (threshold={threshold}, particles={number_particles})")
