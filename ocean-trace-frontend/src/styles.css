@@ -2111,3 +2111,1210 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.5));
 }
 
+/* ============================================================
+   FORENSIC PDF EXPORT STYLES & PRINT TEMPLATE
+   ============================================================ */
+.btn-export-pdf {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff !important;
+  border: 1px solid #38bdf8;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.35);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: var(--f-ui);
+}
+.btn-export-pdf:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  border-color: #7dd3fc;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.5);
+  transform: translateY(-1px);
+}
+.btn-export-pdf:active {
+  transform: translateY(1px);
+}
+.btn-export-pdf:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Hidden export container for rendering clean HTML to PDF */
+#forensicPdfExportContainer {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 794px; /* A4 width at standard web DPI */
+  background: #ffffff;
+  color: #0f172a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.pdf-page {
+  width: 794px;
+  padding: 32px 36px;
+  background: #ffffff;
+  color: #0f172a;
+  box-sizing: border-box;
+  page-break-after: always;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.pdf-header {
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.pdf-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.pdf-seal-svg {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+.pdf-org-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0284c7;
+  margin-bottom: 2px;
+}
+.pdf-main-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 0 0 2px;
+}
+.pdf-sub-title {
+  font-size: 10.5px;
+  color: #475569;
+}
+.pdf-meta-box {
+  text-align: right;
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+.pdf-case-badge {
+  display: inline-block;
+  background: #0f172a;
+  color: #ffffff;
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+.pdf-classification-bar {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 5px 12px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #334155;
+}
+
+.pdf-section {
+  margin-bottom: 16px;
+  page-break-inside: avoid;
+}
+.pdf-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1.5px solid #cbd5e1;
+  padding-bottom: 4px;
+  margin-bottom: 10px;
+}
+.pdf-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pdf-section-num {
+  background: #0284c7;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.pdf-section-tag {
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.pdf-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.pdf-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.pdf-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.pdf-card-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.pdf-dl {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  row-gap: 4px;
+  column-gap: 8px;
+  font-size: 10.5px;
+  margin: 0;
+}
+.pdf-dl dt {
+  color: #64748b;
+  font-weight: 500;
+}
+.pdf-dl dd {
+  color: #0f172a;
+  font-weight: 600;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.pdf-mono {
+  font-family: "JetBrains Mono", Consolas, monospace !important;
+}
+
+.pdf-imagery-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.pdf-imagery-box {
+  flex: 1;
+  background: #0b131c;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px;
+  text-align: center;
+}
+.pdf-imagery-box img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 3px;
+  display: block;
+}
+.pdf-imagery-cap {
+  font-size: 9.5px;
+  color: #94a3b8;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* Suspect Table */
+.pdf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+  margin-top: 4px;
+}
+.pdf-table th {
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pdf-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+  vertical-align: top;
+}
+.pdf-table tr.highlight-rank-1 {
+  background: #f0fdf4;
+}
+.pdf-table tr:nth-child(even):not(.highlight-rank-1) {
+  background: #f8fafc;
+}
+.pdf-rank-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.pdf-rank-1 { background: #b02414; color: #ffffff; }
+.pdf-rank-2 { background: #0e7f52; color: #ffffff; }
+.pdf-rank-3 { background: #64748b; color: #ffffff; }
+
+.pdf-score-box {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-weight: 800;
+  font-size: 13px;
+  color: #0f172a;
+}
+.pdf-score-box span {
+  font-size: 9px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+/* Primary Suspect Dossier Box */
+.pdf-dossier-box {
+  background: #f1f5f9;
+  border-left: 4px solid #b02414;
+  border-radius: 0 6px 6px 0;
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+.pdf-dossier-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.pdf-dossier-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.pdf-dossier-desc {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: #334155;
+}
+
+/* Disclaimer & Integrity Block */
+.pdf-disclaimer-box {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-top: 14px;
+  font-size: 9.5px;
+  line-height: 1.45;
+  color: #92400e;
+}
+.pdf-disclaimer-title {
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdf-integrity-grid {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 14px;
+  background: #0f172a;
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-top: 14px;
+  align-items: center;
+}
+.pdf-integrity-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  margin-bottom: 4px;
+}
+.pdf-integrity-hash {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  font-size: 9.5px;
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  padding: 6px 8px;
+  word-break: break-all;
+  line-height: 1.35;
+  margin: 4px 0;
+}
+.pdf-integrity-note {
+  font-size: 8.5px;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+.pdf-qr-box {
+  width: 90px;
+  height: 90px;
+  background: #ffffff;
+  padding: 5px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.pdf-qr-box img, .pdf-qr-box canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.pdf-footer {
+  margin-top: 14px;
+  padding-top: 8px;
+  border-top: 1px solid #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5px;
+  color: #64748b;
+}
+
+/* ============================================================
+   HISTORICAL SPILL HOTSPOTS SECTION (ANALYTICS ONLY)
+   ============================================================ */
+.hist-hotspots-card {
+  grid-column: span 12;
+  margin-top: 14px;
+}
+.hotspots-disclaimer {
+  font-family: var(--f-ui);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  margin-top: 4px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--caution) 8%, var(--panel-2));
+  border-left: 3px solid var(--caution);
+  border-radius: 4px;
+}
+.hotspots-map-wrap {
+  position: relative;
+  width: 100%;
+  background: #08121d;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.3);
+}
+.hotspots-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.hotspot-dot {
+  cursor: pointer;
+}
+.hotspot-pulse {
+  animation: pulse-red-ring 2.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  transform-origin: center;
+}
+@keyframes pulse-red-ring {
+  0% { r: 5px; opacity: 0.9; }
+  50% { r: 14px; opacity: 0.25; }
+  100% { r: 20px; opacity: 0; }
+}
+.hotspots-grid-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.hotspot-item {
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.18s ease;
+}
+.hotspot-item:hover {
+  border-color: #ef4444;
+  background: color-mix(in srgb, #ef4444 6%, var(--panel-2));
+  transform: translateY(-1px);
+}
+.hotspot-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hotspot-badge {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.85);
+  flex-shrink: 0;
+}
+.hotspot-name {
+  font-family: var(--f-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.hotspot-coords {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.hotspot-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  margin-top: 4px;
+}
+
+
+
+/* ============================================================
+   ANALYTICS PAGE DYNAMIC & FORENSIC POLISH (#pageAnalytics)
+   Scoped specifically to #pageAnalytics - pure presentation layer
+   ============================================================ */
+
+#pageAnalytics .pg-wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 28px 48px;
+}
+
+#pageAnalytics .an-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+#pageAnalytics .sp4 { grid-column: span 4; }
+#pageAnalytics .sp6 { grid-column: span 6; }
+#pageAnalytics .sp8 { grid-column: span 8; }
+#pageAnalytics .sp12 { grid-column: span 12; }
+
+@media (max-width: 1200px) {
+  #pageAnalytics .sp4 { grid-column: span 6; }
+  #pageAnalytics .sp8 { grid-column: span 12; }
+}
+@media (max-width: 860px) {
+  #pageAnalytics .sp4,
+  #pageAnalytics .sp6,
+  #pageAnalytics .sp8 { grid-column: span 12; }
+}
+
+/* ------------------------------------------------------------
+   PART 1: INCIDENT SCORE & LIVE INSTRUMENT GAUGE
+   ------------------------------------------------------------ */
+#pageAnalytics .gauge-wrap {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 14px auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#pageAnalytics .gauge {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+#pageAnalytics .gauge-track {
+  fill: none;
+  stroke: var(--sus-track);
+  stroke-width: 11;
+}
+
+#pageAnalytics .gauge-fill {
+  fill: none;
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-dasharray: 364.4;
+  stroke-dashoffset: 364.4;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.4s ease;
+  filter: drop-shadow(0 0 6px var(--critical));
+  animation: gaugeGlowPulse 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes gaugeGlowPulse {
+  0% { filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.45)); }
+  100% { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.85)); }
+}
+
+#pageAnalytics .gauge-mid {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+#pageAnalytics .gauge-val {
+  font-family: var(--f-display);
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+#pageAnalytics .gauge-cap {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+/* Live Telemetry Pill Badge */
+.an-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #ef4444;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+.an-live-beacon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+  animation: liveBeaconGlow 1.4s ease-in-out infinite alternate;
+}
+
+/* Severity Chip */
+#pageAnalytics .sev-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 6px 0 16px;
+}
+#pageAnalytics .sev-chip.crit {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+}
+#pageAnalytics .sev-chip.high {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+}
+#pageAnalytics .sev-chip.ok {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #22c55e;
+}
+
+/* Metric Bars */
+#pageAnalytics .mbars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#pageAnalytics .mbars.big {
+  gap: 14px;
+}
+#pageAnalytics .mb {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+#pageAnalytics .mb-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+}
+#pageAnalytics .mb-l {
+  font-family: var(--f-ui);
+  font-weight: 500;
+  color: var(--ink-2);
+}
+#pageAnalytics .mb-v {
+  font-family: var(--f-mono);
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+#pageAnalytics .mb-track {
+  height: 6px;
+  border-radius: 4px;
+  background: var(--sus-track);
+  overflow: hidden;
+  position: relative;
+}
+#pageAnalytics .mb-track i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  transition: width 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 8px currentColor;
+}
+#pageAnalytics .imp-note {
+  font-family: var(--f-ui);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-3);
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+/* ------------------------------------------------------------
+   PART 2: ALERT CENTER (URGENT CRITICAL VISUALS & ENTRANCE)
+   ------------------------------------------------------------ */
+#pageAnalytics .alert-group {
+  margin-bottom: 14px;
+}
+#pageAnalytics .alert-group:last-child {
+  margin-bottom: 0;
+}
+#pageAnalytics .alert-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+#pageAnalytics .alert-head.crit { color: #ef4444; }
+#pageAnalytics .alert-head.high { color: #f59e0b; }
+#pageAnalytics .alert-head b {
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--panel-3);
+  font-size: 10px;
+}
+
+#pageAnalytics .alert {
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+  border-left: 3.5px solid var(--rule);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  animation: alertEntrance 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+#pageAnalytics .alert:hover {
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+@keyframes alertEntrance {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#pageAnalytics .alert.crit {
+  border-left-color: #ef4444;
+  background: color-mix(in srgb, #ef4444 6%, var(--panel-2));
+  border-color: color-mix(in srgb, #ef4444 32%, var(--rule));
+  position: relative;
+  overflow: hidden;
+}
+#pageAnalytics .alert.crit::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3.5px;
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  animation: critBorderGlow 1.8s ease-in-out infinite alternate;
+}
+@keyframes critBorderGlow {
+  0% { opacity: 0.6; box-shadow: 0 0 4px #ef4444; }
+  100% { opacity: 1; box-shadow: 0 0 12px #ef4444; }
+}
+
+#pageAnalytics .alert.high {
+  border-left-color: #f59e0b;
+  background: color-mix(in srgb, #f59e0b 5%, var(--panel-2));
+  border-color: color-mix(in srgb, #f59e0b 26%, var(--rule));
+}
+
+#pageAnalytics .alert-t {
+  font-family: var(--f-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+#pageAnalytics .alert-b {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+#pageAnalytics .alert-m {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-top: 5px;
+}
+
+/* ------------------------------------------------------------
+   PART 3: FORENSIC VESSEL TIMELINE & INCIDENT TIMELINE
+   ------------------------------------------------------------ */
+#pageAnalytics .vtl {
+  position: relative;
+  padding: 44px 10px 48px;
+  min-height: 140px;
+}
+
+#pageAnalytics .vtl-rail {
+  position: absolute;
+  top: 50%;
+  left: 3%;
+  right: 3%;
+  height: 4px;
+  transform: translateY(-50%);
+  background: var(--sus-track);
+  border-radius: 2px;
+  overflow: visible;
+}
+
+#pageAnalytics .vtl-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #ef4444 100%);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+  transition: width 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#pageAnalytics .vtl-ev {
+  position: absolute;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.16s ease;
+}
+#pageAnalytics .vtl-ev:hover {
+  transform: translateX(-50%) scale(1.06);
+  z-index: 5;
+}
+
+#pageAnalytics .vtl-ev.down {
+  top: calc(50% + 14px);
+}
+#pageAnalytics .vtl-ev.up {
+  bottom: calc(50% + 14px);
+  flex-direction: column-reverse;
+}
+
+#pageAnalytics .vtl-dot-wrap {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1.5px solid var(--rule);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.18s ease;
+}
+#pageAnalytics .vtl-ev.hot .vtl-dot-wrap {
+  border-color: #ef4444;
+  background: color-mix(in srgb, #ef4444 14%, var(--panel));
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
+}
+
+#pageAnalytics .vtl-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+
+#pageAnalytics .vtl-box {
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 6px 10px;
+  min-width: 110px;
+  max-width: 145px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+#pageAnalytics .vtl-ev.hot .vtl-box {
+  border-color: color-mix(in srgb, #ef4444 40%, var(--rule));
+  background: color-mix(in srgb, #ef4444 8%, var(--panel-2));
+}
+
+#pageAnalytics .vtl-t {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+#pageAnalytics .vtl-ev.hot .vtl-t {
+  color: #ef4444;
+}
+#pageAnalytics .vtl-l {
+  font-family: var(--f-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+/* Incident Timeline (Vertical Stepper Cards) */
+#pageAnalytics .itl {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 0 28px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#pageAnalytics .itl::before {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 10px;
+  bottom: 12px;
+  width: 2px;
+  background: linear-gradient(180deg, #38bdf8 0%, #22c55e 60%, #ef4444 100%);
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+}
+
+#pageAnalytics .itl li {
+  position: relative;
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: all 0.18s ease;
+}
+#pageAnalytics .itl li:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--rule));
+  transform: translateX(3px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+
+#pageAnalytics .itl li::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  top: 14px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+#pageAnalytics .itl li.crit::before {
+  border-color: #ef4444;
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+}
+
+#pageAnalytics .itl-step-badge {
+  display: inline-block;
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+#pageAnalytics .itl li.crit .itl-step-badge {
+  color: #ef4444;
+}
+
+#pageAnalytics .itl-t {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-bottom: 2px;
+}
+#pageAnalytics .itl-l {
+  font-family: var(--f-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+}
+#pageAnalytics .itl-b {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.45;
+  margin-top: 3px;
+}
+
+/* ------------------------------------------------------------
+   PART 4: SCORE CONTRIBUTION & CONTAINMENT WINDOW PRIORITY
+   ------------------------------------------------------------ */
+#pageAnalytics .card-priority-metric {
+  border: 1px solid color-mix(in srgb, #38bdf8 38%, var(--rule));
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(56, 189, 248, 0.2);
+  position: relative;
+}
+#pageAnalytics .priority-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #38bdf8;
+  text-transform: uppercase;
+  margin-right: 8px;
+}
+
+/* Score Contribution Donut */
+#pageAnalytics .donut-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 0;
+}
+#pageAnalytics .donut {
+  width: 170px;
+  height: 170px;
+}
+#pageAnalytics .donut-seg {
+  fill: none;
+  stroke-width: 24;
+  stroke-linecap: butt;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  transition: stroke-dasharray 1s cubic-bezier(0.16, 1, 0.3, 1), stroke-width 0.2s ease;
+  cursor: pointer;
+}
+#pageAnalytics .donut-seg:hover {
+  stroke-width: 28;
+  filter: brightness(1.2);
+}
+
+#pageAnalytics .donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-soft);
+}
+#pageAnalytics .donut-legend .dl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.14s ease;
+}
+#pageAnalytics .donut-legend .dl:hover {
+  background: var(--panel-3);
+}
+#pageAnalytics .donut-legend .dl i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 8px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+#pageAnalytics .donut-legend .dl b {
+  font-family: var(--f-mono);
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Containment Window Area Chart */
+#pageAnalytics .hchart {
+  width: 100%;
+  padding: 8px 0;
+}
+#pageAnalytics .hchart svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+#pageAnalytics .hc-grid {
+  stroke: var(--rule-soft);
+  stroke-dasharray: 3 3;
+}
+#pageAnalytics .hc-axis {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  fill: var(--ink-3);
+}
+#pageAnalytics .fa-area {
+  transition: opacity 0.3s ease;
+}
+#pageAnalytics .fa-line {
+  fill: none;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(31, 196, 159, 0.45));
+}
+
+#pageAnalytics .fa-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule-soft);
+}
+#pageAnalytics .fa-stat-tile {
+  background: var(--panel-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+#pageAnalytics .fa-stat-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+#pageAnalytics .fa-k {
+  font-family: var(--f-display);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+#pageAnalytics .fa-c {
+  font-family: var(--f-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-3);
+  margin-top: 4px;
+}
+
+/* ------------------------------------------------------------
+   PART 5: HISTORICAL HOTSPOTS HIGH-TECH SATELLITE/RADAR MAP
+   ------------------------------------------------------------ */
+#pageAnalytics .world-coastlines {
+  fill: #142233;
+  stroke: #253e58;
+  stroke-width: 0.85px;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+}
+#pageAnalytics .hotspots-map-wrap {
+  position: relative;
+  background: radial-gradient(circle at 50% 50%, #0a1928 0%, #050d16 100%);
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.65), 0 8px 30px rgba(0,0,0,0.3);
+}
+
+#pageAnalytics .hotspots-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+#pageAnalytics .hotspot-group {
+  cursor: pointer;
+  transition: transform 0.16s ease;
+}
+#pageAnalytics .hotspot-group:hover {
+  filter: brightness(1.25);
+}

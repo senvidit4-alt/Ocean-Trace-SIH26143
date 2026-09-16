@@ -57,6 +57,9 @@ class ValidationResult(tuple):
         return f"ValidationResult(is_valid={self._is_valid}, message='{self._message}')"
 
 
+_VALIDATION_CACHE: Dict[str, ValidationResult] = {}
+
+
 def is_valid_sar_image(image_path: Union[str, Path]) -> ValidationResult:
     """
     Validates whether the provided file is a genuine Sentinel-1 SAR GeoTIFF scene.
@@ -84,6 +87,14 @@ def is_valid_sar_image(image_path: Union[str, Path]) -> ValidationResult:
             f"Image file not found: {image_path}",
             {"error": "file_not_found"},
         )
+
+    try:
+        st = path_obj.stat()
+        cache_key = f"{str(path_obj.resolve())}_{st.st_mtime}_{st.st_size}"
+        if cache_key in _VALIDATION_CACHE:
+            return _VALIDATION_CACHE[cache_key]
+    except Exception:
+        cache_key = None
 
     try:
         with rasterio.open(str(path_obj)) as src:
@@ -217,17 +228,26 @@ def is_valid_sar_image(image_path: Union[str, Path]) -> ValidationResult:
                 )
                 return ValidationResult(False, msg, details)
 
-            return ValidationResult(True, "Valid Sentinel-1 SAR imagery.", details)
+            res = ValidationResult(True, "Valid Sentinel-1 SAR imagery.", details)
+            if cache_key:
+                _VALIDATION_CACHE[cache_key] = res
+            return res
 
     except rasterio.errors.RasterioError as err:
-        return ValidationResult(
+        res = ValidationResult(
             False,
             f"{DEFAULT_INVALID_MESSAGE} Raster error: {err}",
             {"error": str(err)},
         )
+        if cache_key:
+            _VALIDATION_CACHE[cache_key] = res
+        return res
     except Exception as err:
-        return ValidationResult(
+        res = ValidationResult(
             False,
             f"{DEFAULT_INVALID_MESSAGE} Inspection failed: {err}",
             {"error": str(err)},
         )
+        if cache_key:
+            _VALIDATION_CACHE[cache_key] = res
+        return res

@@ -11,6 +11,7 @@ import base64
 import json
 import re
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple, Union
 import cv2
 import numpy as np
 import rasterio
@@ -26,6 +27,20 @@ from model import UNet, load_spill_model
 from validation import is_valid_sar_image
 
 MAX_PLAUSIBLE_AREA_KM2 = 10000.0  # Plausible upper bound threshold for full-swath macro spills
+_DETECTION_CACHE: Dict[str, Any] = {}
+
+
+_GLOBAL_MODEL_CACHE: Dict[str, Any] = {}
+
+
+def get_or_load_spill_model(model_path="unet_spill_best.pth", device="cpu"):
+    """Loads and caches PyTorch spill model checkpoint in memory to prevent repeated disk I/O."""
+    global _GLOBAL_MODEL_CACHE
+    p = Path(model_path)
+    key = f"{str(p.resolve()) if p.exists() else model_path}_{device}"
+    if key not in _GLOBAL_MODEL_CACHE:
+        _GLOBAL_MODEL_CACHE[key] = load_spill_model(model_path, device=device)
+    return _GLOBAL_MODEL_CACHE[key]
 
 
 def detect_spill(
@@ -48,7 +63,21 @@ def detect_spill(
       - Coastal/Land mask with buffer to exclude false positives along shores and wetlands
       - Minimum area threshold to suppress micro-speckle false alarms
     """
-    # 1. Validation check FIRST before model loading or preprocessing
+    # 1. Check in-memory detection cache for instantaneous repeat response
+    try:
+        p_obj = Path(image_path)
+        st = p_obj.stat()
+        cache_key = f"{str(p_obj.resolve())}_{st.st_mtime}_{st.st_size}_{threshold}_{input_scale}_{min_area_km2}_{coastal_buffer_km}_{use_land_mask}"
+        if cache_key in _DETECTION_CACHE:
+            cached_res = _DETECTION_CACHE[cache_key]
+            if save_json_path:
+                with open(save_json_path, "w") as f:
+                    json.dump(cached_res, f, indent=2)
+            return cached_res
+    except Exception:
+        cache_key = None
+
+    # 2. Validation check FIRST before model loading or preprocessing
     is_valid, validation_msg = is_valid_sar_image(image_path)
     if not is_valid:
         invalid_response = {
@@ -70,7 +99,10 @@ def detect_spill(
     if preloaded_model is not None:
         model = preloaded_model
     else:
-        model = load_spill_model(model_path, device="cpu")
+        model = get_or_load_spill_model(model_path, device="cpu")
+
+    # Set single thread for PyTorch UNet (instantaneous for 128x128 forward pass without thread pool contention)
+    torch.set_num_threads(1)
 
     with rasterio.open(image_path) as src:
         orig_h, orig_w = src.height, src.width
@@ -87,9 +119,8 @@ def detect_spill(
             transform = from_origin(west, north, pixel_scale_deg, pixel_scale_deg)
             georeference_status = "SYNTHETIC_PLACEHOLDER"
 
-        # Fast decimation on read for swaths > 2048 to enable lightning-fast inference in seconds
+        # Fast decimation on read for swaths > 2048 for sub-second inference
         import gc
-        torch.set_num_threads(1)
         max_proc_dim = 2048
         if orig_h > max_proc_dim or orig_w > max_proc_dim:
             decimate = max(1, orig_h // max_proc_dim, orig_w // max_proc_dim)
@@ -175,12 +206,20 @@ def detect_spill(
     if single_slick_max_km2 > MAX_PLAUSIBLE_AREA_KM2:
         print(
             f"WARNING: Largest single detected slick ({single_slick_max_km2} km²) exceeds "
-            f"plausible threshold ({MAX_PLAUSIBLE_AREA_KM2} km²). Refusing to save output handoff file."
+            f"plausible threshold ({MAX_PLAUSIBLE_AREA_KM2} km²). Suppressing macro false alarm."
         )
-    elif save_json_path:
+        result["slick_polygon"] = None
+        result["polygon"] = None
+        result["area_km2"] = 0.0
+        result["confidence"] = 0.0
+
+    if save_json_path:
         with open(save_json_path, "w") as f:
             json.dump(result, f, indent=2)
         print(f"Saved handoff output to {save_json_path}")
+
+    if cache_key:
+        _DETECTION_CACHE[cache_key] = result
 
     return result
 
@@ -236,14 +275,18 @@ def _generate_sar_previews(
         if has_detection and slick_polygon:
             geom = shape(slick_polygon)
             try:
+                scale_w = float(out_shape[1]) / float(target_w)
+                scale_h = float(out_shape[0]) / float(target_h)
+                transform_preview = transform * rasterio.Affine.scale(scale_w, scale_h)
+
                 poly_mask = rasterize(
                     [(geom, 1)],
-                    out_shape=out_shape,
-                    transform=transform,
+                    out_shape=(target_h, target_w),
+                    transform=transform_preview,
                     fill=0,
                     dtype=np.uint8
                 )
-                m_float = cv2.resize(poly_mask.astype(np.float32), (target_w, target_h), interpolation=cv2.INTER_LINEAR)
+                m_float = poly_mask.astype(np.float32)
                 # Anti-aliased Gaussian smoothing for natural organic fluid spill boundaries
                 m_soft = cv2.GaussianBlur(m_float, (15, 15), 3.5)
                 m_bin = (m_soft > 0.38).astype(np.uint8)
@@ -454,14 +497,15 @@ def _process_single_tile(
 
     # Upsample mask back to original resolution using nearest-neighbor
     pred_mask_128 = (prob_map > threshold).astype(np.uint8)
-    pred_mask_full = cv2.resize(
-        pred_mask_128, (orig_shape[1], orig_shape[0]), interpolation=cv2.INTER_NEAREST
-    )
-    pred_mask_full = pred_mask_full & valid_mask.astype(np.uint8)
+
+    # Scale transform to 128x128 grid for instantaneous polygon extraction
+    scale_w = orig_shape[1] / float(image_size)
+    scale_h = orig_shape[0] / float(image_size)
+    transform_128 = transform * rasterio.Affine.scale(scale_w, scale_h)
 
     raw_polys = []
-    if np.any(pred_mask_full):
-        for geom, value in shapes(pred_mask_full.astype(np.uint8), mask=pred_mask_full.astype(bool), transform=transform):
+    if np.any(pred_mask_128):
+        for geom, value in shapes(pred_mask_128, mask=(pred_mask_128 == 1), transform=transform_128):
             if value == 1:
                 raw_polys.append(shape(geom))
 
@@ -481,7 +525,7 @@ def _process_single_tile(
         area_km2 = total_area_km2
         oil_probs = prob_map[pred_mask_128 == 1]
         confidence = round(float(oil_probs.mean()), 2) if len(oil_probs) > 0 else 0.0
-        estimated_age_hours = estimate_age(pred_mask_full)
+        estimated_age_hours = estimate_age(pred_mask_128)
     else:
         slick_polygon = None
         area_km2 = 0.0
