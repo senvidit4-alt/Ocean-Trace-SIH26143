@@ -3344,6 +3344,13 @@ function buildAnalysisCharts(){
           <stop offset="50%" stop-color="#1fc49f" stop-opacity="0.12"/>
           <stop offset="100%" stop-color="#1fc49f" stop-opacity="0"/>
         </linearGradient>
+        <filter id="anGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
       </defs>
       ${[0,20,40,60].map(v => `<line class="hc-grid" x1="${L}" y1="${ys(v)}" x2="${W-R2}" y2="${ys(v)}"/>
         <text class="hc-axis" x="${L-10}" y="${ys(v)+4}" text-anchor="end">${v}%</text>`).join("")}
@@ -3351,8 +3358,20 @@ function buildAnalysisCharts(){
       <line x1="${xs(0)}" y1="${ys(dynamicRecover[0])}" x2="${xs(0)}" y2="${H-B}" stroke="#1fc49f" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
       <path class="fa-area" fill="url(#anFill)" d="${line} L${xs(n)},${ys(0)} L${xs(0)},${ys(0)} Z"/>
       <path class="fa-line" stroke="#1fc49f" d="${line}"/>
+      <!-- Continuous Live Tracer Beacon Travelling along the Curve -->
+      <g class="fa-tracer-group">
+        <circle r="8" fill="none" stroke="#38bdf8" stroke-width="1.5" opacity="0.6">
+          <animateMotion path="${line}" dur="5.5s" repeatCount="indefinite" />
+          <animate attributeName="r" values="3;11;3" dur="1.4s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.85;0.15;0.85" dur="1.4s" repeatCount="indefinite"/>
+        </circle>
+        <circle r="4" fill="#38bdf8" filter="url(#anGlow)">
+          <animateMotion path="${line}" dur="5.5s" repeatCount="indefinite" />
+        </circle>
+      </g>
+      <!-- Elapsed time T=0 Current State Marker with continuous radar pulse -->
       <g transform="translate(${xs(0)}, ${ys(dynamicRecover[0])})">
-        <circle cx="0" cy="0" r="10" fill="none" stroke="#1fc49f" stroke-width="1.5" opacity="0.6"/>
+        <circle class="fa-origin-pulse" cx="0" cy="0" r="10" fill="none" stroke="#1fc49f" stroke-width="1.5"/>
         <circle cx="0" cy="0" r="4.5" fill="#1fc49f"/>
       </g>
     </svg>`;

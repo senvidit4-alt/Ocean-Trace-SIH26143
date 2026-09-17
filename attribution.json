@@ -1,17 +1,17 @@
 {
   "contract_version": "1.0",
   "analysis_metadata": {
-    "search_radius_km": 98.36507441254275,
+    "search_radius_km": 9.942759487904146,
     "search_time_window": [
-      "2021-09-02T18:10:04Z",
-      "2021-09-03T00:10:04Z"
+      "2026-09-17T00:14:47.339592Z",
+      "2026-09-17T06:14:47.339592Z"
     ],
     "n_vessels_considered": 0,
     "caveats": [
-      "Reader 'synthetic_regional' does not cover observation_time=2021-09-03 00:10:04 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
-      "Reader 'synthetic_regional' does not cover origin_time=2021-09-02 18:10:04 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
-      "Reader 'synthetic_regional' does not spatially cover 56 of 56 seeded particle positions (reader coverage: 72.20-72.80E, 18.60-19.20N); fallback values were used for those particles.",
-      "No vessels found at nominal radius of 49.2 km; results use an expanded radius of 98.4 km."
+      "Reader 'synthetic_regional' does not cover observation_time=2026-09-17 06:14:47.339592 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
+      "Reader 'synthetic_regional' does not cover origin_time=2026-09-17 00:14:47.339592 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
+      "Reader 'synthetic_regional' does not spatially cover 150 of 150 seeded particle positions (reader coverage: 72.20-72.80E, 18.60-19.20N); fallback values were used for those particles.",
+      "No vessels found at nominal radius of 5.0 km; results use an expanded radius of 9.9 km."
     ]
   },
   "candidates": []

@@ -2674,12 +2674,35 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   stroke-dashoffset: 364.4;
   transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.4s ease;
   filter: drop-shadow(0 0 6px var(--critical));
-  animation: gaugeGlowPulse 2.8s ease-in-out infinite alternate;
+  animation: gaugeGlowPulse 2.8s ease-in-out infinite alternate, gaugeArcShimmer 4.5s ease-in-out infinite;
 }
 
 @keyframes gaugeGlowPulse {
   0% { filter: drop-shadow(0 0 3px rgba(239, 68, 68, 0.45)); }
-  100% { filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.85)); }
+  100% { filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.9)); }
+}
+
+@keyframes gaugeArcShimmer {
+  0%, 100% { stroke-opacity: 0.88; }
+  50% { stroke-opacity: 1; filter: drop-shadow(0 0 14px var(--critical)) brightness(1.18); }
+}
+
+/* Continuous sweeping ambient shimmer over gauge arc */
+#pageAnalytics .gauge-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(239, 68, 68, 0.08) 310deg, rgba(255, 255, 255, 0.45) 345deg, transparent 360deg);
+  mask: radial-gradient(circle, transparent 52px, black 53px, black 64px, transparent 65px);
+  -webkit-mask: radial-gradient(circle, transparent 52px, black 53px, black 64px, transparent 65px);
+  animation: gaugeRotorSweep 4.5s linear infinite;
+}
+
+@keyframes gaugeRotorSweep {
+  0% { transform: rotate(-90deg); }
+  100% { transform: rotate(270deg); }
 }
 
 #pageAnalytics .gauge-mid {
@@ -2701,6 +2724,12 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   color: var(--ink);
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
+  animation: gaugeValBreathe 3.2s ease-in-out infinite alternate;
+}
+
+@keyframes gaugeValBreathe {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.02); }
 }
 
 #pageAnalytics .gauge-cap {
@@ -2759,7 +2788,13 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.35);
   color: #ef4444;
+  animation: sevCritPulse 2.6s ease-in-out infinite alternate;
 }
+@keyframes sevCritPulse {
+  0% { border-color: rgba(239, 68, 68, 0.35); box-shadow: 0 0 4px rgba(239, 68, 68, 0.2); }
+  100% { border-color: rgba(239, 68, 68, 0.65); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+}
+
 #pageAnalytics .sev-chip.high {
   background: rgba(245, 158, 11, 0.12);
   border: 1px solid rgba(245, 158, 11, 0.35);
@@ -2771,7 +2806,7 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   color: #22c55e;
 }
 
-/* Metric Bars */
+/* Metric Bars with Continuous Sheen Shimmer */
 #pageAnalytics .mbars {
   display: flex;
   flex-direction: column;
@@ -2817,7 +2852,37 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   border-radius: 4px;
   transition: width 1.1s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 0 8px currentColor;
+  position: relative;
+  overflow: hidden;
 }
+
+/* Continuous live shimmer sheen across metric bars */
+#pageAnalytics .mb-track i::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+  animation: barSheenSweep 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+#pageAnalytics .mb:nth-child(1) .mb-track i::after { animation-delay: 0.1s; }
+#pageAnalytics .mb:nth-child(2) .mb-track i::after { animation-delay: 0.6s; }
+#pageAnalytics .mb:nth-child(3) .mb-track i::after { animation-delay: 1.1s; }
+#pageAnalytics .mb:nth-child(4) .mb-track i::after { animation-delay: 1.6s; }
+#pageAnalytics .mb:nth-child(5) .mb-track i::after { animation-delay: 2.1s; }
+#pageAnalytics .mb:nth-child(6) .mb-track i::after { animation-delay: 2.6s; }
+
+@keyframes barSheenSweep {
+  0% { transform: translateX(0%); opacity: 0; }
+  20% { opacity: 0.85; }
+  60% { transform: translateX(250%); opacity: 0; }
+  100% { transform: translateX(250%); opacity: 0; }
+}
+
 #pageAnalytics .imp-note {
   font-family: var(--f-ui);
   font-size: 12px;
@@ -2829,7 +2894,7 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
 }
 
 /* ------------------------------------------------------------
-   PART 2: ALERT CENTER (URGENT CRITICAL VISUALS & ENTRANCE)
+   PART 2: ALERT CENTER (URGENT CRITICAL VISUALS & CONTINUOUS PULSE)
    ------------------------------------------------------------ */
 #pageAnalytics .alert-group {
   margin-bottom: 14px;
@@ -2857,6 +2922,14 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   border-radius: 10px;
   background: var(--panel-3);
   font-size: 10px;
+  transition: all 0.2s ease;
+}
+#pageAnalytics .alert-head.crit b {
+  animation: critHeadCountPulse 2s ease-in-out infinite alternate;
+}
+@keyframes critHeadCountPulse {
+  0% { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+  100% { background: rgba(239, 68, 68, 0.5); color: #ffffff; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
 }
 
 #pageAnalytics .alert {
@@ -2885,7 +2958,14 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   border-color: color-mix(in srgb, #ef4444 32%, var(--rule));
   position: relative;
   overflow: hidden;
+  animation: critCardPulse 2.8s ease-in-out infinite alternate;
 }
+
+@keyframes critCardPulse {
+  0% { border-color: color-mix(in srgb, #ef4444 26%, var(--rule)); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  100% { border-color: color-mix(in srgb, #ef4444 58%, var(--rule)); box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2); }
+}
+
 #pageAnalytics .alert.crit::before {
   content: "";
   position: absolute;
@@ -2899,7 +2979,7 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
 }
 @keyframes critBorderGlow {
   0% { opacity: 0.6; box-shadow: 0 0 4px #ef4444; }
-  100% { opacity: 1; box-shadow: 0 0 12px #ef4444; }
+  100% { opacity: 1; box-shadow: 0 0 14px #ef4444; }
 }
 
 #pageAnalytics .alert.high {
@@ -2958,6 +3038,24 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   border-radius: 2px;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
   transition: width 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+/* Continuous traveling telemetry shimmer along timeline rail */
+#pageAnalytics .vtl-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+  animation: vtlRailSweep 3.4s ease-in-out infinite;
+}
+
+@keyframes vtlRailSweep {
+  0% { transform: translateX(0%); }
+  55%, 100% { transform: translateX(250%); }
 }
 
 #pageAnalytics .vtl-ev {
@@ -2998,10 +3096,38 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   transition: all 0.18s ease;
 }
+
+/* Continuous breathing pulse on hot/active vessel events */
 #pageAnalytics .vtl-ev.hot .vtl-dot-wrap {
   border-color: #ef4444;
   background: color-mix(in srgb, #ef4444 14%, var(--panel));
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
+  animation: vtlHotBeacon 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes vtlHotBeacon {
+  0% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); transform: translateY(-50%) scale(1); }
+  100% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.95); transform: translateY(-50%) scale(1.12); }
+}
+
+/* Continuous telemetry radar ring on closest approach / active marker */
+#pageAnalytics .vtl-ev.hot::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid #ef4444;
+  animation: vtlRadarRing 2.4s cubic-bezier(0.1, 0.2, 0.7, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes vtlRadarRing {
+  0% { width: 14px; height: 14px; opacity: 0.9; }
+  100% { width: 42px; height: 42px; opacity: 0; }
 }
 
 #pageAnalytics .vtl-icon {
@@ -3090,10 +3216,27 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   border: 2px solid var(--accent);
   box-shadow: 0 0 6px var(--accent);
 }
+
+/* Continuous breathing pulse on final active/critical incident phase */
+#pageAnalytics .itl li.crit {
+  animation: itlCritCardBreathe 3s ease-in-out infinite alternate;
+}
+
+@keyframes itlCritCardBreathe {
+  0% { border-color: color-mix(in srgb, #ef4444 30%, var(--rule)); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  100% { border-color: color-mix(in srgb, #ef4444 65%, var(--rule)); box-shadow: 0 4px 18px rgba(239, 68, 68, 0.18); }
+}
+
 #pageAnalytics .itl li.crit::before {
   border-color: #ef4444;
   background: #ef4444;
   box-shadow: 0 0 10px #ef4444;
+  animation: itlCritBeacon 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes itlCritBeacon {
+  0% { box-shadow: 0 0 4px #ef4444; transform: scale(1); }
+  100% { box-shadow: 0 0 14px #ef4444, 0 0 0 5px rgba(239, 68, 68, 0.25); transform: scale(1.15); }
 }
 
 #pageAnalytics .itl-step-badge {
@@ -3154,16 +3297,18 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   margin-right: 8px;
 }
 
-/* Score Contribution Donut */
+/* Score Contribution Donut with Continuous Ambient Pulsing */
 #pageAnalytics .donut-wrap {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 12px 0;
+  position: relative;
 }
 #pageAnalytics .donut {
   width: 170px;
   height: 170px;
+  position: relative;
 }
 #pageAnalytics .donut-seg {
   fill: none;
@@ -3173,10 +3318,42 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   transform: rotate(-90deg);
   transition: stroke-dasharray 1s cubic-bezier(0.16, 1, 0.3, 1), stroke-width 0.2s ease;
   cursor: pointer;
+  animation: donutSegPulse 4s ease-in-out infinite alternate;
 }
+#pageAnalytics .donut-seg:nth-child(2) { animation-delay: 0.2s; }
+#pageAnalytics .donut-seg:nth-child(3) { animation-delay: 0.9s; }
+#pageAnalytics .donut-seg:nth-child(4) { animation-delay: 1.6s; }
+#pageAnalytics .donut-seg:nth-child(5) { animation-delay: 2.3s; }
+#pageAnalytics .donut-seg:nth-child(6) { animation-delay: 3.0s; }
+
+@keyframes donutSegPulse {
+  0% { filter: drop-shadow(0 0 2px currentColor) brightness(0.95); opacity: 0.92; }
+  50% { filter: drop-shadow(0 0 8px currentColor) brightness(1.2); opacity: 1; }
+  100% { filter: drop-shadow(0 0 3px currentColor) brightness(0.98); opacity: 0.94; }
+}
+
 #pageAnalytics .donut-seg:hover {
   stroke-width: 28;
-  filter: brightness(1.2);
+  filter: brightness(1.25) drop-shadow(0 0 10px currentColor);
+}
+
+/* Continuous ambient sweep ring around donut chart */
+#pageAnalytics .donut-wrap::after {
+  content: "";
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(56, 189, 248, 0.08) 60deg, rgba(255, 255, 255, 0.3) 90deg, transparent 110deg);
+  mask: radial-gradient(circle, transparent 48px, black 49px, black 74px, transparent 75px);
+  -webkit-mask: radial-gradient(circle, transparent 48px, black 49px, black 74px, transparent 75px);
+  animation: donutRadarSweep 8s linear infinite;
+}
+
+@keyframes donutRadarSweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 #pageAnalytics .donut-legend {
@@ -3217,7 +3394,7 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   font-variant-numeric: tabular-nums;
 }
 
-/* Containment Window Area Chart */
+/* Containment Window Area Chart with Continuous Traveling Tracer */
 #pageAnalytics .hchart {
   width: 100%;
   padding: 8px 0;
@@ -3245,6 +3422,23 @@ button{ cursor:pointer; background:none; border:none; padding:0; }
   stroke-linecap: round;
   stroke-linejoin: round;
   filter: drop-shadow(0 0 6px rgba(31, 196, 159, 0.45));
+  animation: faLineGlow 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes faLineGlow {
+  0% { filter: drop-shadow(0 0 4px rgba(31, 196, 159, 0.35)); }
+  100% { filter: drop-shadow(0 0 10px rgba(31, 196, 159, 0.85)); }
+}
+
+#pageAnalytics .fa-origin-pulse {
+  animation: faOriginRingPulse 2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes faOriginRingPulse {
+  0% { transform: scale(0.85); opacity: 0.8; }
+  50% { transform: scale(1.4); opacity: 0.2; }
+  100% { transform: scale(0.85); opacity: 0.8; }
 }
 
 #pageAnalytics .fa-stats {
