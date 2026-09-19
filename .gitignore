@@ -18,6 +18,7 @@ node_modules/
 dist/
 ocean-trace-frontend/node_modules/
 ocean-trace-frontend/dist/
+ocean-trace-react/
 .env
 .env.local
 *.log
