@@ -59,7 +59,7 @@ import json
 import logging
 import math
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Union
 
 import numpy as np
@@ -243,7 +243,12 @@ def _check_coverage(readers, observation_time, origin_time, lons, lats) -> list:
         name = getattr(r, 'name', repr(r))
 
         for label, t in (('observation_time', observation_time), ('origin_time', origin_time)):
-            if not r.covers_time(t):
+            t_cmp = t
+            if r.start_time is not None and getattr(r.start_time, 'tzinfo', None) is None and getattr(t_cmp, 'tzinfo', None) is not None:
+                t_cmp = t_cmp.astimezone(timezone.utc).replace(tzinfo=None)
+            elif r.start_time is not None and getattr(r.start_time, 'tzinfo', None) is not None and getattr(t_cmp, 'tzinfo', None) is None:
+                t_cmp = t_cmp.replace(tzinfo=timezone.utc)
+            if not r.covers_time(t_cmp):
                 warnings.append(
                     f"Reader '{name}' does not cover {label}={t} "
                     f"(reader range: {r.start_time} .. {r.end_time}); "
@@ -314,7 +319,12 @@ def reconstruct_source(
     if readers:
         o.add_reader(readers)
 
-    o.seed_within_polygon(lons=lons, lats=lats, time=observation_time, number=number)
+    # Ensure observation_time is timezone-naive UTC for OpenDrift internal reader compatibility
+    seed_time = observation_time
+    if seed_time is not None and getattr(seed_time, "tzinfo", None) is not None:
+        seed_time = seed_time.astimezone(timezone.utc).replace(tzinfo=None)
+
+    o.seed_within_polygon(lons=lons, lats=lats, time=seed_time, number=number)
     n_seeded = o.num_elements_scheduled()
 
     steps = round(search_window_hours * 3600 / time_step_seconds)

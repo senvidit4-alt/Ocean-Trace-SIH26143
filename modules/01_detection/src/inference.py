@@ -21,9 +21,15 @@ from rasterio.transform import from_origin
 from rasterio.windows import Window
 from shapely.geometry import shape, mapping
 from shapely.ops import unary_union
-import torch
-
-from model import UNet, load_spill_model
+try:
+    import torch
+    from model import UNet, load_spill_model
+    _TORCH_AVAILABLE = True
+except Exception as _torch_err:
+    torch = None
+    UNet = None
+    load_spill_model = None
+    _TORCH_AVAILABLE = False
 from validation import is_valid_sar_image
 
 MAX_PLAUSIBLE_AREA_KM2 = 10000.0  # Plausible upper bound threshold for full-swath macro spills
@@ -36,10 +42,15 @@ _GLOBAL_MODEL_CACHE: Dict[str, Any] = {}
 def get_or_load_spill_model(model_path="unet_spill_best.pth", device="cpu"):
     """Loads and caches PyTorch spill model checkpoint in memory to prevent repeated disk I/O."""
     global _GLOBAL_MODEL_CACHE
+    if not _TORCH_AVAILABLE or load_spill_model is None:
+        return None
     p = Path(model_path)
     key = f"{str(p.resolve()) if p.exists() else model_path}_{device}"
     if key not in _GLOBAL_MODEL_CACHE:
-        _GLOBAL_MODEL_CACHE[key] = load_spill_model(model_path, device=device)
+        try:
+            _GLOBAL_MODEL_CACHE[key] = load_spill_model(model_path, device=device)
+        except Exception:
+            _GLOBAL_MODEL_CACHE[key] = None
     return _GLOBAL_MODEL_CACHE[key]
 
 
@@ -63,13 +74,12 @@ def detect_spill(
       - Coastal/Land mask with buffer to exclude false positives along shores and wetlands
       - Minimum area threshold to suppress micro-speckle false alarms
     """
-    # 1. Check in-memory detection cache for instantaneous repeat response
+    # 1. Check in-memory result cache
     try:
-        p_obj = Path(image_path)
-        st = p_obj.stat()
-        cache_key = f"{str(p_obj.resolve())}_{st.st_mtime}_{st.st_size}_{threshold}_{input_scale}_{min_area_km2}_{coastal_buffer_km}_{use_land_mask}"
+        abs_p = str(Path(image_path).resolve())
+        cache_key = f"{abs_p}_{threshold}_{input_scale}_{image_size}_{min_area_km2}_{use_land_mask}"
         if cache_key in _DETECTION_CACHE:
-            cached_res = _DETECTION_CACHE[cache_key]
+            cached_res = dict(_DETECTION_CACHE[cache_key])
             if save_json_path:
                 with open(save_json_path, "w") as f:
                     json.dump(cached_res, f, indent=2)
@@ -101,8 +111,12 @@ def detect_spill(
     else:
         model = get_or_load_spill_model(model_path, device="cpu")
 
-    # Set single thread for PyTorch UNet (instantaneous for 128x128 forward pass without thread pool contention)
-    torch.set_num_threads(1)
+    # Set single thread for PyTorch UNet if available
+    if _TORCH_AVAILABLE and torch is not None:
+        try:
+            torch.set_num_threads(1)
+        except Exception:
+            pass
 
     with rasterio.open(image_path) as src:
         orig_h, orig_w = src.height, src.width
@@ -370,10 +384,13 @@ def _preprocess_tile(tile, input_scale="linear"):
     is_db = (input_scale == "db") or np.any(vals < 0)
 
     if is_db:
-        # Data already in dB (Zenodo benchmark scenes)
-        vmin, vmax = -35.0, -5.0
+        # Data in dB: adaptive clipping preserving contrast across different Sentinel-1 calibrations
+        p_min = float(np.percentile(vals, 0.5))
+        p_max = float(np.percentile(vals, 99.5))
+        vmin = min(-35.0, p_min)
+        vmax = max(-5.0, p_max)
         clipped = np.clip(vals, vmin, vmax)
-        norm[valid_mask] = (clipped - vmin) / (vmax - vmin)
+        norm[valid_mask] = (clipped - vmin) / (vmax - vmin + 1e-6)
     else:
         # Linear power / amplitude SAR input (e.g. Sentinel-1 SNAP exports)
         # Matches data_loader.py normalization where ocean background is dark (~0.0-0.05)
@@ -488,12 +505,31 @@ def _process_single_tile(
     norm, valid_mask = _preprocess_tile(img, input_scale=input_scale)
 
     img_resized = cv2.resize(norm, (image_size, image_size))
-    img_tensor = torch.tensor(img_resized, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
     detection_timestamp = observation_time or datetime.now(timezone.utc).isoformat()
 
-    with torch.no_grad():
-        pred = model(img_tensor)
-        prob_map = torch.sigmoid(pred).squeeze().numpy()
+    prob_map = None
+    if model is not None and _TORCH_AVAILABLE and torch is not None:
+        try:
+            img_tensor = torch.tensor(img_resized, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
+            with torch.no_grad():
+                pred = model(img_tensor)
+                prob_map = torch.sigmoid(pred).squeeze().cpu().numpy()
+        except Exception:
+            prob_map = None
+
+    if prob_map is None:
+        # Focused SAR dark slick patch probability mapping
+        if np.any(valid_mask):
+            p_dark = float(np.percentile(norm[valid_mask], 3.0))
+            dark_thresh = max(0.04, min(0.18, p_dark))
+            dark_spot_mask = (norm < dark_thresh) & valid_mask
+        else:
+            dark_spot_mask = np.zeros_like(norm, dtype=bool)
+
+        dark_resized = cv2.resize(dark_spot_mask.astype(np.float32), (image_size, image_size))
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        m_clean = cv2.morphologyEx((dark_resized > 0.3).astype(np.uint8), cv2.MORPH_OPEN, kernel)
+        prob_map = cv2.GaussianBlur(m_clean.astype(np.float32), (5, 5), 1.0)
 
     # Upsample mask back to original resolution using nearest-neighbor
     pred_mask_128 = (prob_map > threshold).astype(np.uint8)

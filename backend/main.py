@@ -117,12 +117,15 @@ def get_cached_model():
     if CACHED_SPILL_MODEL is None:
         ckpt = _repo_root / "unet_spill_best.pth"
         if ckpt.exists():
-            import torch
-            from model import load_spill_model
-            logger.info("Pre-loading spill model checkpoint into memory (eval mode, no grad)...")
-            torch.set_grad_enabled(False)
-            torch.set_num_threads(1)
-            CACHED_SPILL_MODEL = load_spill_model(str(ckpt), device="cpu")
+            try:
+                import torch
+                from model import load_spill_model
+                logger.info("Pre-loading spill model checkpoint into memory (eval mode, no grad)...")
+                torch.set_grad_enabled(False)
+                torch.set_num_threads(1)
+                CACHED_SPILL_MODEL = load_spill_model(str(ckpt), device="cpu")
+            except Exception as exc:
+                logger.warning(f"Could not load PyTorch spill model checkpoint ({exc}).")
     return CACHED_SPILL_MODEL
 
 def get_cached_ais_dataset(path: Optional[Path] = None):
@@ -139,23 +142,38 @@ def get_cached_ais_dataset(path: Optional[Path] = None):
 
 @app.on_event("startup")
 def startup_preload_cache():
-    import torch
-    import psutil
-    torch.set_grad_enabled(False)
-    torch.set_num_threads(1)
+    try:
+        import torch
+        torch.set_grad_enabled(False)
+        torch.set_num_threads(1)
+    except Exception as exc:
+        logger.warning(f"Torch initialization skipped: {exc}")
 
     # Eagerly preload PyTorch model and AIS dataset ONCE at server startup
-    app.state.spill_model = get_cached_model()
-    app.state.ais_dataset = get_cached_ais_dataset()
+    try:
+        app.state.spill_model = get_cached_model()
+    except Exception as exc:
+        logger.warning(f"Spill model preload warning: {exc}")
+        app.state.spill_model = None
 
-    process = psutil.Process(os.getpid())
-    rss_mb = process.memory_info().rss / (1024 * 1024)
-    logger.info("=" * 60)
-    logger.info("OceanTrace FastAPI Initialized & Preloaded Successfully")
-    logger.info(f"Baseline Startup Memory: {rss_mb:.2f} MB (Render Limit: 512 MB)")
-    logger.info(f"Model Preloaded: {app.state.spill_model is not None}")
-    logger.info(f"AIS Dataset Preloaded: {app.state.ais_dataset is not None}")
-    logger.info("=" * 60)
+    try:
+        app.state.ais_dataset = get_cached_ais_dataset()
+    except Exception as exc:
+        logger.warning(f"AIS dataset preload warning: {exc}")
+        app.state.ais_dataset = None
+
+    try:
+        import psutil
+        process = psutil.Process(os.getpid())
+        rss_mb = process.memory_info().rss / (1024 * 1024)
+        logger.info("=" * 60)
+        logger.info("OceanTrace FastAPI Initialized & Preloaded Successfully")
+        logger.info(f"Baseline Startup Memory: {rss_mb:.2f} MB (Render Limit: 512 MB)")
+        logger.info(f"Model Preloaded: {app.state.spill_model is not None}")
+        logger.info(f"AIS Dataset Preloaded: {app.state.ais_dataset is not None}")
+        logger.info("=" * 60)
+    except Exception as exc:
+        logger.info(f"Startup finished: {exc}")
 
 
 # Helper serialization utilities

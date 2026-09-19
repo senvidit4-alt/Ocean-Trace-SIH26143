@@ -1,18 +1,50 @@
 {
   "contract_version": "1.0",
   "analysis_metadata": {
-    "search_radius_km": 9.942759487904146,
+    "search_radius_km": 56.01579747480371,
     "search_time_window": [
-      "2026-09-17T00:14:47.339592Z",
-      "2026-09-17T06:14:47.339592Z"
+      "2021-08-28T18:02:02Z",
+      "2021-08-29T00:02:02Z"
     ],
-    "n_vessels_considered": 0,
+    "n_vessels_considered": 1,
     "caveats": [
-      "Reader 'synthetic_regional' does not cover observation_time=2026-09-17 06:14:47.339592 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
-      "Reader 'synthetic_regional' does not cover origin_time=2026-09-17 00:14:47.339592 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
-      "Reader 'synthetic_regional' does not spatially cover 150 of 150 seeded particle positions (reader coverage: 72.20-72.80E, 18.60-19.20N); fallback values were used for those particles.",
-      "No vessels found at nominal radius of 5.0 km; results use an expanded radius of 9.9 km."
+      "Reader 'synthetic_regional' does not cover observation_time=2021-08-29 00:02:02 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
+      "Reader 'synthetic_regional' does not cover origin_time=2021-08-28 18:02:02 (reader range: 2026-08-31 08:00:00 .. 2026-08-31 15:00:00); fallback values were used outside this range.",
+      "Reader 'synthetic_regional' does not spatially cover 178 of 178 seeded particle positions (reader coverage: 72.20-72.80E, 18.60-19.20N); fallback values were used for those particles."
     ]
   },
-  "candidates": []
+  "candidates": [
+    {
+      "mmsi": "367533180",
+      "vessel_name": "ELIZABETH R CHASE",
+      "category": "Low-Evidence Candidate",
+      "score": 0.0988193550291759,
+      "features": [
+        {
+          "name": "spatial_proximity",
+          "value": 0.1646989250486265,
+          "raw_value": 46.79005584496198,
+          "raw_unit": "km",
+          "weight": 0.6,
+          "contribution": 0.0988193550291759,
+          "explanation": "Closest approach was 46.8 km from origin centroid.",
+          "limitation": null
+        },
+        {
+          "name": "temporal_overlap",
+          "value": 0.0,
+          "raw_value": 0.0,
+          "raw_unit": "%",
+          "weight": 0.4,
+          "contribution": 0.0,
+          "explanation": "Vessel trackably present for 0% of the release window elapsed time.",
+          "limitation": null
+        }
+      ],
+      "data_confidence": {
+        "coverage_fraction": 0.0,
+        "note": "No AIS coverage at all during the release window \u2014 presence/absence cannot be determined from AIS. An observability gap has many possible causes (equipment, coverage, congestion, port berthing, or, less commonly, deliberate action) and is not evidence of intent by itself."
+      }
+    }
+  ]
 }
