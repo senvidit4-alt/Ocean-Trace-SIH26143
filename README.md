@@ -11,7 +11,7 @@
 
 ---
 
-## 🧭 About the Project (Ye Project Kya Hai?)
+## 🧭 About the Project 
 
 **OceanTrace** is a full-stack forensic intelligence platform designed to detect marine oil spills from satellite imagery, trace their origin backwards through ocean currents and winds, and identify the specific vessels responsible using AIS (Automatic Identification System) maritime telemetry.
 
