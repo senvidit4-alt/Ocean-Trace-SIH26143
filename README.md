@@ -49,7 +49,7 @@ When vessels illegally dump oil (bilge dumping) or suffer accidents in the open 
 
 ---
 
-## 🎯 Target Users (Kiske Liye Hai?)
+## 🎯 Target Users 
 
 1. **Coast Guards & Maritime Surveillance Authorities (ICG / USCG / EMSA)**:
    - Rapidly detect offshore pollution events and generate court-admissible forensic evidence dossiers.
