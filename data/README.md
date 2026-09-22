@@ -6,7 +6,7 @@ This directory is intended for large environmental datasets, AIS archives, and S
 
 **Expected Data Sources:**
 - Environment: Copernicus Marine Service (CMEMS) ocean currents, ECMWF ERA5 wind data.
-- AIS: Historical terrestrial and satellite AIS data (e.g., Spire).
+-  REAL AIS: Historical terrestrial and satellite AIS data (e.g., Spire).
 - SAR: Processed Sentinel-1 imagery or oil spill detection masks.
 
 Store your large data files here. See the `samples/` directory for synthetic/test data schemas if applicable.
